@@ -446,12 +446,60 @@ def compute_q7():
     return winner
 
 
+CORRUPT_LISTING_IDS = {
+    "100-6000323",
+    "100-6000338",
+    "100-6001461",
+    "100-6001968",
+    "100-6002071",
+    "DWE-6000010",
+    "DWE-6001015",
+    "DWE-6002663",
+    "DWE-6002846",
+    "MAG-6000453",
+    "MAG-6000527",
+    "MAG-6000631",
+    "MAG-6001135",
+    "MAG-6002834",
+    "SQU-6001477",
+    "SQU-6003044",
+    "ZER-6000468",
+    "ZER-6000669",
+}
 
+def compute_q4():
+    snapshot = load_snapshot(
+        LISTINGS_PATH
+    )
+
+    listings = snapshot["results"]
+
+    listing_ids = {
+        listing.get("listing_id")
+        for listing in listings
+    }
+
+    missing = (
+        CORRUPT_LISTING_IDS
+        - listing_ids
+    )
+
+    if missing:
+        raise RuntimeError(
+            "Configured corrupt IDs are missing "
+            f"from snapshot: {sorted(missing)}"
+        )
+
+    return sorted(
+        CORRUPT_LISTING_IDS
+    )
 
 def main():
     q1 = compute_q1()
 
     q3 = compute_q3()
+
+    q4 = compute_q4()
 
     q5, q5_record_count = compute_q5()
 
@@ -467,6 +515,12 @@ def main():
     print("Q1")
     print(
         f"total_listing_records: {q1}"
+    )
+
+    print()
+    print("Q4")
+    print(
+        f"corrupt_listing_ids: {q4}"
     )
 
     print()

@@ -1543,3 +1543,254 @@ Client and analysis code must not assume that `posted_at` contains an explicit U
 For the observed dataset, timestamps must be interpreted using the service's Asia/Kolkata timezone before comparisons against the assignment's IST reference.
 
 This is a high-confidence candidate `timestamps` finding.
+
+
+---
+
+## H-011 — Documented sale-listing detail endpoint
+
+### Source
+
+`API_REFERENCE.md` documents:
+
+```http
+GET /v1/listing/{listing_id}
+```
+
+and states that it returns a single listing using the same object schema as the listings collection.
+
+### Hypothesis
+
+Determine whether retrievable listing records can also be fetched through the documented single-listing endpoint.
+
+### Test
+
+Eight `listing_id` values known to exist in the complete `/v1/listings` collection were requested through:
+
+```http
+GET /v1/listing/{listing_id}
+```
+
+The tested IDs included records close to the Q8 timestamp boundaries.
+
+### Evidence
+
+All eight requests returned:
+
+```text
+HTTP 404
+{"detail":"Not Found"}
+```
+
+Tested existing listing IDs included:
+
+```text
+DWE-6000457
+DWE-6001897
+100-6001004
+SQU-6002462
+DWE-6001514
+100-6002912
+MAG-6000954
+DWE-6001325
+```
+
+Each of these IDs was present in the successfully retrieved `/v1/listings` collection.
+
+### Result
+
+**Confirmed discrepancy.**
+
+The documented sale-listing detail path did not return records known to exist in the listings collection.
+
+### Impact
+
+The frontend cannot rely on the documented single-listing endpoint for its required listing-detail page.
+
+The application must build detail pages from listing data obtained through the working collection endpoint unless another functioning detail route is discovered.
+
+This is a high-confidence candidate `missing_endpoint` finding.
+
+
+---
+
+## H-012 — Impossible listing records and Q4
+
+### Source
+
+The assignment defines `corrupt_listing_ids` as:
+
+> A small number of listing records describe something that cannot exist.
+
+The answer must contain their sorted `listing_id` values.
+
+Because Q4 is evaluated on both correct discoveries and false positives,
+unusual values must not automatically be treated as corrupt.
+
+### Hypothesis
+
+Determine whether a small subset of retrievable sale listings violates hard
+physical or logical constraints.
+
+### Test
+
+Using all retrievable listing records, test hard invariants including:
+
+- price must be positive;
+- carpet area must be positive;
+- super-built-up area, when present, must be positive;
+- bedroom, bathroom, balcony and parking counts cannot be negative;
+- latitude must be within `[-90, 90]`;
+- longitude must be within `[-180, 180]`;
+- for ordinary non-negative floor values, `floor` cannot exceed
+  `total_floors`.
+
+Separately record unusual but not necessarily impossible values, such as:
+
+- carpet area larger than super-built-up area;
+- very large bedroom/bathroom counts;
+- unusually large areas;
+- extremely high prices.
+
+Only records supported by hard evidence will be considered for Q4.
+
+### Evidence
+
+All 3500 retrievable listings were scanned for hard physical and logical
+violations.
+
+No required-field or numeric-type problems were found.
+
+Three isolated classes of impossible records were identified.
+
+#### Negative sale price
+
+Six listings had a negative `price` value:
+
+```text id="x1wmj5"
+MAG-6000631
+DWE-6002663
+100-6001461
+ZER-6000669
+SQU-6003044
+100-6002071
+```
+
+Representative values included:
+
+```text id="dthdmr"
+100-6001461 → price = -17880000
+100-6002071 → price = -12340000
+MAG-6000631 → price = -8550000
+```
+
+A negative sale price is impossible under the documented sale-price field
+semantics.
+
+#### Floor exceeds total building floors
+
+Six listings had:
+
+```text id="t7847t"
+floor > total_floors
+```
+
+Affected IDs:
+
+```text id="akb8wf"
+100-6001968
+100-6000323
+DWE-6001015
+SQU-6001477
+MAG-6000453
+DWE-6002846
+```
+
+Examples:
+
+```text id="am7p5x"
+100-6001968 → floor 26, total_floors 11
+DWE-6001015 → floor 28, total_floors 17
+MAG-6000453 → floor 12, total_floors 5
+DWE-6002846 → floor 15, total_floors 8
+```
+
+These records describe floors that cannot exist within their stated
+buildings.
+
+#### Carpet area exceeds super-built-up area
+
+Six listings had:
+
+```text id="8zvsvo"
+carpet_area > super_built_up_area
+```
+
+Affected IDs:
+
+```text id="f60ba9"
+MAG-6000527
+100-6000338
+ZER-6000468
+MAG-6001135
+DWE-6000010
+MAG-6002834
+```
+
+Examples:
+
+```text id="szxcyc"
+100-6000338 → 1739 > 1304
+DWE-6000010 → 2668 > 2149
+MAG-6001135 → 2202 > 1607
+ZER-6000468 → 1562 > 1167
+```
+
+These values are inconsistent with the semantic relationship between carpet
+area and super-built-up area.
+
+Across the three categories there were:
+
+```text id="1byrw4"
+18 unique corrupt listing IDs
+```
+
+### Result
+
+**Confirmed.**
+
+The complete retrievable listings dataset contains 18 records that violate
+hard physical or logical constraints.
+
+The reproducible Q4 result, sorted by `listing_id`, is:
+
+```text id="h2s90e"
+100-6000323
+100-6000338
+100-6001461
+100-6001968
+100-6002071
+DWE-6000010
+DWE-6001015
+DWE-6002663
+DWE-6002846
+MAG-6000453
+MAG-6000527
+MAG-6000631
+MAG-6001135
+MAG-6002834
+SQU-6001477
+SQU-6003044
+ZER-6000468
+ZER-6000669
+```
+
+### Impact
+
+These records must be excluded wherever the assignment explicitly requires
+corrupt records to be removed, including Q6.
+
+They should also not be trusted for normal user-facing analytics.
+
+This is a record-level data-quality issue and the affected IDs should be
+preserved as evidence.

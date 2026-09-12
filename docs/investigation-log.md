@@ -1794,3 +1794,338 @@ They should also not be trusted for normal user-facing analytics.
 
 This is a record-level data-quality issue and the affected IDs should be
 preserved as evidence.
+
+
+
+---
+
+## H-013 — Duplicate property representations and Q2
+
+### Source
+
+The assignment defines `unique_properties` as:
+
+> Among the retrievable listing records, genuine or not, how many distinct
+> properties do they describe? A property described by several records counts
+> once.
+
+Therefore `listing_id` uniqueness cannot be used as a proxy for physical
+property uniqueness.
+
+The listing schema exposes physical attributes including locality,
+apartment/building name, property type, bedrooms, bathrooms, floor,
+total floors, carpet area, super-built-up area and coordinates.
+
+### Hypothesis
+
+Determine whether multiple listing records represent the same physical
+property and identify a reproducible property-identity rule.
+
+### Test
+
+Using all 3500 retrievable sale listings:
+
+1. measure exact duplication of a strict physical signature consisting of:
+   - locality;
+   - apartment name;
+   - property type;
+   - bedroom/bathroom/balcony counts;
+   - floor and total floors;
+   - carpet area;
+   - super-built-up area;
+   - latitude and longitude;
+
+2. repeat the analysis without apartment name to detect naming variation;
+
+3. measure coordinate reuse independently;
+
+4. inspect duplicate groups across websites and compare fields that are
+   expected to vary between advertisements, including price, seller/contact,
+   source and listing URL.
+
+No final property count will be produced until the observed duplicate pattern
+is inspected.
+
+### Evidence
+
+All 3500 retrievable listing records were analyzed for multiple advertisements of
+the same physical property.
+
+Exact equality across all physical fields was too strict:
+
+```text
+strict physical signatures: 3500
+exact duplicate groups: 0
+```
+
+Coordinate reuse alone was also not sufficient:
+
+```text
+repeated-coordinate groups: 245
+records in repeated-coordinate groups: 519
+```
+
+Inspection showed that identical coordinates generally represented a building
+or project location rather than an individual unit. Records sharing coordinates
+frequently differed in BHK, floor, area and price.
+
+Before property matching, a confirmed mixed-area-unit issue in 323
+`magichomes` records was normalized from square metres to square feet.
+
+After normalization, near-duplicate analysis was performed within the same
+normalized locality and apartment/building name.
+
+The final conservative property-identity rule required:
+
+* same normalized locality;
+* same normalized apartment/building name;
+* same property type;
+* same bedroom count;
+* same bathroom count;
+* same balcony count;
+* same floor;
+* same total floors;
+* normalized carpet area within 5%;
+* normalized super-built-up area within 5%;
+* coordinates within 150 metres.
+
+Two independently designed conservative matching rules initially found the
+same 253 candidate pairs.
+
+Independent validation found:
+
+```text
+property-type mismatches: 0
+balcony mismatches: 0
+pairs within 150 metres: 252
+geographic outliers: 1
+```
+
+The only geographic outlier was:
+
+```text
+DWE-6000679
+ZER-6002666
+```
+
+Although their structured attributes were similar, their coordinates were
+36,837.79 metres apart. Since one physical property cannot exist at two
+locations separated by approximately 36.8 km, this pair was rejected as a
+false match.
+
+The final duplicate graph therefore contained 252 valid duplicate edges.
+
+After collapsing connected components:
+
+```text
+valid duplicate property groups: 240
+
+component sizes:
+size 2: 234 groups
+size 3: 6 groups
+
+duplicate listing records collapsed: 246
+```
+
+Therefore:
+
+```text
+3500 retrievable listing records
+- 246 duplicate representations
+= 3254 distinct physical properties
+```
+
+### Result
+
+**Confirmed.**
+
+The reproducible Q2 answer is:
+
+```text
+unique_properties = 3254
+```
+
+The count includes genuine and non-genuine listings because Q2 asks only how
+many distinct physical properties the retrievable records describe.
+
+### Impact
+
+Listing records cannot be treated as one-to-one with physical properties.
+
+Analytics or UI features that operate at the property level should normalize
+the confirmed mixed area units and apply property-resolution logic before
+counting properties.
+
+The duplicate groups also provide useful structure for later investigation of
+cross-site inconsistencies and suspicious/fake listings.
+
+
+
+
+
+---
+
+## H-014 — Mixed listing area units
+
+### Source
+
+The listing schema describes `carpet_area` and `super_built_up_area`
+as property-area fields.
+
+The assignment later requires Q6 to calculate rupees per square foot,
+so the unit of `carpet_area` directly affects a scored answer.
+
+### Observation
+
+Area profiling across all 3500 retrievable listings showed a
+source-specific low-value cluster.
+
+For `carpet_area < 300`:
+
+- magichomes: 323 records
+- all other sources combined: 1 record
+
+For magichomes `super_built_up_area`, exactly 323 records were below 400.
+
+Representative magichomes records included values such as:
+
+- 36 carpet / 45 super-built-up for a 1 BHK
+- 82 carpet / 113 super-built-up for a 2 BHK
+- 149 carpet / 206 super-built-up for a 4 BHK
+
+Interpreting those values as square metres and converting them to square feet
+produces physically plausible residential areas.
+
+### Hypothesis
+
+A subset of magichomes listings returns both area fields in square metres,
+while the remaining listing records use square feet.
+
+A candidate unit split is:
+
+- magichomes records with `carpet_area < 300` and
+  `super_built_up_area < 400` → square metres;
+- remaining records → square feet.
+
+### Test
+
+Verify:
+
+1. whether the low-carpet and low-super-built-up sets are exactly the same;
+2. whether there is a clear numerical boundary between the two populations;
+3. whether converting the candidate records by
+   `1 sqm = 10.7639104167 sqft` makes BHK-specific area distributions align
+   with the other listing sources;
+4. whether normalized 2-BHK price-per-square-foot values become comparable
+   with the other websites.
+
+### Evidence
+
+The suspected low-area population was isolated to `magichomes`.
+
+For `magichomes`:
+
+```text
+carpet_area < 300: 323
+super_built_up_area < 400: 323
+intersection: 323
+carpet-only records: 0
+super-only records: 0
+```
+
+Therefore the two independently observed low-area conditions identify exactly the
+same 323 records.
+
+The two populations also have clear numerical separation.
+
+For carpet area:
+
+```text
+largest candidate value: 221
+smallest non-candidate value: 334
+```
+
+For super-built-up area:
+
+```text
+largest candidate value: 271
+smallest non-candidate value: 429
+```
+
+The candidate values were converted using:
+
+```text
+1 square metre = 10.7639104167 square feet
+```
+
+After conversion, BHK-specific median carpet areas closely matched the other
+four listing sources:
+
+```text
+1 BHK: 2.58% difference
+2 BHK: 0.79% difference
+3 BHK: 0.25% difference
+4 BHK: 0.51% difference
+5 BHK: 0.34% difference
+```
+
+The normalized 2-BHK price-per-square-foot medians were also comparable:
+
+```text
+100acres:   14321.49
+dwelling:   13652.54
+magichomes: 14365.36
+squarelane: 14765.30
+zerobroker: 14322.49
+```
+
+Without conversion, the low-area `magichomes` records would produce implausible
+residential areas and artificially inflated price-per-square-foot values.
+
+After normalizing the confirmed mixed `magichomes` area units, a
+within-building near-duplicate search was performed.
+
+The dataset contained:
+
+```text
+buildings with multiple listings: 872
+within-building listing pairs: 2386
+cross-site pairs: 1932
+
+### Result
+
+**Confirmed unit discrepancy.**
+
+A subset of 323 `magichomes` sale listings returns `carpet_area` and
+`super_built_up_area` in square metres even though the remaining sale listings
+use square feet.
+
+The reproducible normalization rule is:
+
+```text
+website == "magichomes"
+AND carpet_area < 300
+AND super_built_up_area < 400
+```
+
+For records satisfying that rule, convert both area values to square feet using:
+
+```text
+area_sqft = raw_area * 10.7639104167
+```
+
+All other observed sale-listing area values remain in square feet.
+
+### Impact
+
+Area values must be normalized before:
+
+* property deduplication for Q2;
+* price-per-square-foot calculation for Q6;
+* area comparisons or analytics;
+* displaying these records consistently in the application.
+
+Failing to normalize these records would make 323 properties appear roughly
+10.76 times smaller than their actual square-foot areas.
+
+This is a high-confidence candidate `units` finding.

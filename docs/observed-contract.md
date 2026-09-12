@@ -314,3 +314,39 @@ HTTP 404
 Therefore the application must not currently rely on the documented detail endpoint.
 
 Listing-detail routes in the frontend should be built from listing data retrieved through the functioning collection endpoint unless another working server-side detail route is subsequently discovered.
+
+
+
+
+## Sale Listing Area Units
+
+Sale listing area values are not consistently returned in one unit across all sources.
+
+A confirmed subset of `magichomes` listings returns both `carpet_area` and
+`super_built_up_area` in square metres.
+
+The observed subset is identified by:
+
+```text
+website == "magichomes"
+AND carpet_area < 300
+AND super_built_up_area < 400
+```
+
+Exactly 323 retrievable listings matched both conditions, with no disagreement
+between the carpet-area and super-built-up-area populations.
+
+For those records, normalize using:
+
+```text
+area_sqft = raw_area × 10.7639104167
+```
+
+All other observed sale-listing area values are treated as square feet.
+
+This normalization is required before:
+
+* comparing areas across listing sources;
+* property deduplication;
+* calculating price per square foot;
+* displaying consistent area values in the application.

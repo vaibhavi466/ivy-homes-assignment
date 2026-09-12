@@ -3,7 +3,9 @@ import os
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
-
+import math
+from collections import defaultdict
+from itertools import combinations
 
 load_dotenv()
 
@@ -56,6 +58,131 @@ REFERENCE = datetime.fromisoformat(
 Q8_WINDOW_START = (
     REFERENCE - timedelta(days=7)
 )
+
+
+SQFT_PER_SQM = 10.7639104167
+def normalize_text(value):
+    if value is None:
+        return None
+
+    return " ".join(
+        str(value)
+        .strip()
+        .lower()
+        .split()
+    )
+
+
+def is_number(value):
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+    )
+
+
+def is_magic_sqm_record(listing):
+    carpet = listing.get(
+        "carpet_area"
+    )
+
+    super_area = listing.get(
+        "super_built_up_area"
+    )
+
+    return (
+        listing.get("website")
+        == "magichomes"
+        and is_number(carpet)
+        and is_number(super_area)
+        and carpet < 300
+        and super_area < 400
+    )
+
+
+def normalized_area(
+    listing,
+    field,
+):
+    value = listing.get(field)
+
+    if not is_number(value):
+        return None
+
+    if is_magic_sqm_record(listing):
+        return (
+            float(value)
+            * SQFT_PER_SQM
+        )
+
+    return float(value)
+
+
+def relative_difference(a, b):
+    if (
+        a is None
+        or b is None
+        or a <= 0
+        or b <= 0
+    ):
+        return None
+
+    return (
+        abs(a - b)
+        / max(a, b)
+    )
+
+
+def distance_meters(a, b):
+    lat1 = a.get("latitude")
+    lon1 = a.get("longitude")
+    lat2 = b.get("latitude")
+    lon2 = b.get("longitude")
+
+    if not all(
+        is_number(value)
+        for value in [
+            lat1,
+            lon1,
+            lat2,
+            lon2,
+        ]
+    ):
+        return None
+
+    earth_radius = 6371000.0
+
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+
+    delta_phi = math.radians(
+        lat2 - lat1
+    )
+
+    delta_lambda = math.radians(
+        lon2 - lon1
+    )
+
+    hav = (
+        math.sin(
+            delta_phi / 2
+        ) ** 2
+        + math.cos(phi1)
+        * math.cos(phi2)
+        * math.sin(
+            delta_lambda / 2
+        ) ** 2
+    )
+
+    return (
+        2
+        * earth_radius
+        * math.atan2(
+            math.sqrt(hav),
+            math.sqrt(1 - hav),
+        )
+    )
+
+
 
 def compute_q8():
     snapshot = load_snapshot(
@@ -206,6 +333,168 @@ def compute_q1():
     return retrieved_count
 
 
+def compute_q2():
+    snapshot = load_snapshot(
+        LISTINGS_PATH
+    )
+
+    listings = snapshot["results"]
+
+    buildings = defaultdict(list)
+
+    for listing in listings:
+        key = (
+            normalize_text(
+                listing.get("locality")
+            ),
+            normalize_text(
+                listing.get(
+                    "apartment_name"
+                )
+            ),
+        )
+
+        if (
+            key[0] is not None
+            and key[1] is not None
+        ):
+            buildings[key].append(
+                listing
+            )
+
+    parent = {
+        listing["listing_id"]:
+            listing["listing_id"]
+        for listing in listings
+    }
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[
+                parent[x]
+            ]
+
+            x = parent[x]
+
+        return x
+
+    def union(a, b):
+        root_a = find(a)
+        root_b = find(b)
+
+        if root_a != root_b:
+            parent[root_b] = root_a
+
+    for group in buildings.values():
+        if len(group) < 2:
+            continue
+
+        for a, b in combinations(
+            group,
+            2,
+        ):
+            if (
+                normalize_text(
+                    a.get(
+                        "property_type"
+                    )
+                )
+                != normalize_text(
+                    b.get(
+                        "property_type"
+                    )
+                )
+            ):
+                continue
+
+            if (
+                a.get("bedroom")
+                != b.get("bedroom")
+            ):
+                continue
+
+            if (
+                a.get("bathroom")
+                != b.get("bathroom")
+            ):
+                continue
+
+            if (
+                a.get("balcony")
+                != b.get("balcony")
+            ):
+                continue
+
+            if (
+                a.get("floor")
+                != b.get("floor")
+            ):
+                continue
+
+            if (
+                a.get("total_floors")
+                != b.get("total_floors")
+            ):
+                continue
+
+            carpet_diff = (
+                relative_difference(
+                    normalized_area(
+                        a,
+                        "carpet_area",
+                    ),
+                    normalized_area(
+                        b,
+                        "carpet_area",
+                    ),
+                )
+            )
+
+            super_diff = (
+                relative_difference(
+                    normalized_area(
+                        a,
+                        "super_built_up_area",
+                    ),
+                    normalized_area(
+                        b,
+                        "super_built_up_area",
+                    ),
+                )
+            )
+
+            distance = distance_meters(
+                a,
+                b,
+            )
+
+            if (
+                carpet_diff is None
+                or super_diff is None
+                or distance is None
+            ):
+                continue
+
+            if (
+                carpet_diff <= 0.05
+                and super_diff <= 0.05
+                and distance <= 150
+            ):
+                union(
+                    a["listing_id"],
+                    b["listing_id"],
+                )
+
+    unique_roots = {
+        find(
+            listing["listing_id"]
+        )
+        for listing in listings
+    }
+
+    return len(
+        unique_roots
+    )
 
 def compute_q3():
     snapshot = load_snapshot(
@@ -497,6 +786,8 @@ def compute_q4():
 def main():
     q1 = compute_q1()
 
+    q2 = compute_q2()
+
     q3 = compute_q3()
 
     q4 = compute_q4()
@@ -522,6 +813,15 @@ def main():
     print(
         f"corrupt_listing_ids: {q4}"
     )
+
+
+    print()
+    print("Q2")
+    print(
+        f"unique_properties: {q2}"
+    )
+    print()
+
 
     print()
     print("Q8")

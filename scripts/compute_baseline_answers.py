@@ -129,6 +129,54 @@ def compute_q1():
     return retrieved_count
 
 
+
+def compute_q3():
+    snapshot = load_snapshot(
+        LISTINGS_PATH
+    )
+
+    metadata = snapshot["metadata"]
+    listings = snapshot["results"]
+
+    if (
+        len(listings)
+        != metadata["records_retrieved"]
+    ):
+        raise RuntimeError(
+            "Listing snapshot metadata does not "
+            "match stored records."
+        )
+
+    if (
+        metadata["final_has_more"]
+        is not False
+    ):
+        raise RuntimeError(
+            "Listing snapshot did not reach "
+            "the end of pagination."
+        )
+
+    active_count = 0
+
+    for listing in listings:
+        if "is_live" not in listing:
+            raise RuntimeError(
+                "A listing is missing is_live."
+            )
+
+        value = listing["is_live"]
+
+        if type(value) is not bool:
+            raise RuntimeError(
+                "A listing contains a non-boolean "
+                "is_live value."
+            )
+
+        if value is True:
+            active_count += 1
+
+    return active_count
+
 # ---------------------------------------------------------------------
 # Q5
 # total_monthly_rent
@@ -215,9 +263,8 @@ def compute_q5():
     )
 
 
-# ---------------------------------------------------------------------
 # Project price normalization
-# ---------------------------------------------------------------------
+
 
 def project_price_to_inr(value):
     if not isinstance(
@@ -322,12 +369,12 @@ def compute_q7():
     return winner
 
 
-# ---------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------
+
 
 def main():
     q1 = compute_q1()
+
+    q3 = compute_q3()
 
     q5, q5_record_count = compute_q5()
 
@@ -342,6 +389,14 @@ def main():
     print(
         f"total_listing_records: {q1}"
     )
+
+    print()
+    print("Q3")
+    print(
+        f"active_listings: {q3}"
+    )
+    print()
+
 
     print()
     print("Q5")

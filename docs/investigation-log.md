@@ -1267,3 +1267,128 @@ Using the raw values as literal INR would produce incorrect prices.
 Using raw numeric ordering without unit normalization would also incorrectly rank projects such as those containing values around `80–99` above projects whose low-single-digit values represent crores.
 
 This is a high-confidence candidate `units` discrepancy for the final findings set.
+
+
+
+---
+
+## H-009 — Active-listing completeness and Q3
+
+### Source
+
+The assignment defines Q3 `active_listings` as the number of retrievable
+listing records where `is_live` is true.
+
+`API_REFERENCE.md` states that:
+
+> `GET /v1/listings` returns active sale listings only.
+
+It further states that inactive, expired and withdrawn listings are excluded
+server-side.
+
+### Hypothesis
+
+Determine whether every retrievable `/v1/listings` record is actually active,
+as documented, and compute Q3 directly from the observed `is_live` field.
+
+### Test
+
+Using all retrievable listing records:
+
+- verify whether every record contains `is_live`;
+- verify that `is_live` values are booleans;
+- count records where `is_live is True`;
+- count records where `is_live is False`;
+- preserve example inactive listing IDs if the endpoint returns any.
+
+
+
+### Evidence
+
+The complete retrievable `/v1/listings` snapshot contained:
+
+```text
+3500 records
+```
+
+Every record contained an `is_live` field.
+
+Validation produced:
+
+```text
+Missing is_live: 0
+Non-boolean is_live: 0
+```
+
+Observed boolean distribution:
+
+```text
+is_live = true: 2792
+is_live = false: 708
+```
+
+Therefore 708 retrievable listing records were inactive even though the API reference states that `/v1/listings` returns active sale listings only.
+
+Example inactive listing IDs:
+
+```text
+SQU-6001937
+DWE-6002796
+MAG-6000794
+SQU-6003155
+SQU-6000987
+SQU-6000737
+DWE-6002177
+DWE-6002689
+100-6001196
+MAG-6001288
+100-6001939
+100-6003034
+ZER-6000180
+ZER-6000474
+SQU-6002061
+100-6002415
+SQU-6001398
+ZER-6001587
+100-6000309
+100-6002885
+```
+
+The Q3 count derived directly from the observed boolean field is:
+
+```text
+active_listings = 2792
+```
+
+### Result
+
+**Confirmed documentation discrepancy.**
+
+The running `/v1/listings` endpoint does not return active listings only.
+
+Out of 3500 retrievable listing records:
+
+```text
+2792 were active
+708 were inactive
+```
+
+The reproducible Q3 result is:
+
+```text
+active_listings = 2792
+```
+
+### Impact
+
+Application and analysis code must not assume that every record returned by `/v1/listings` is active.
+
+Any feature requiring active listings must explicitly filter:
+
+```text
+is_live == true
+```
+
+The inactive records are evidence that the documented server-side exclusion of inactive listings is not reliable.
+
+This is a high-confidence candidate `completeness` discrepancy for the final findings set, supported by record-level evidence IDs.

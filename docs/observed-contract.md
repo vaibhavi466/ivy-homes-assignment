@@ -225,3 +225,26 @@ Across all 400 retrievable projects, 800 total `price_min` / `price_max` values 
 >= 10:
     190 values
     minimum = 41.5
+
+
+## Listing Activity Status
+
+`GET /v1/listings` must not be assumed to return active listings only.
+
+Full traversal produced:
+
+```text
+total retrievable listings: 3500
+is_live = true: 2792
+is_live = false: 708
+```
+
+All observed `is_live` values were JSON booleans.
+
+Therefore, application features that require active listings must explicitly apply:
+
+```text
+is_live == true
+```
+
+rather than assuming the endpoint performs the filtering server-side.

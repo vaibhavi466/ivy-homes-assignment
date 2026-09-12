@@ -988,3 +988,117 @@ Project prices must not be displayed or used for Q7 until their real unit has be
 
 The full projects dataset must be traversed to `has_more=false` before computing project-based answers.
 
+
+
+---
+
+## H-007 — Assigned-locality rental matching and rent-value interpretation
+
+### Source
+
+The assignment asks for the sum of monthly rent across all retrievable rental records in the candidate's assigned locality.
+
+The assigned locality supplied with the API credentials is:
+
+`Sector 49`
+
+`API_REFERENCE.md` documents rental `price` as monthly rent in Indian rupees.
+
+### Hypothesis
+
+Determine:
+
+1. how the assigned locality is represented in the retrieved rental dataset;
+2. whether case/whitespace normalization is sufficient to match it correctly;
+3. whether rental `price` values are numerically plausible as monthly rent in INR before using them for Q5.
+
+### Test
+
+Using the complete retrievable rental snapshot:
+
+- normalize the assigned locality and rental locality values using lowercase and whitespace normalization;
+- count exact normalized matches;
+- inspect similar locality strings;
+- inspect the distribution of `price` values for matching rental records.
+
+No final Q5 sum will be produced until the locality match and rent interpretation are validated.
+
+### Evidence
+
+The assigned locality supplied with the assignment credentials is:
+
+```text
+Sector 49
+```
+
+After lowercase and whitespace normalization:
+
+```text
+sector 49
+```
+
+The complete retrievable rental dataset contained:
+
+```text
+123
+```
+
+records whose normalized locality exactly matched `sector 49`.
+
+No alternative similar locality representation was observed in the rental snapshot.
+
+Price validation across those 123 matching records produced:
+
+```text
+matching rental records: 123
+numeric price values: 123
+missing prices: 0
+non-numeric prices: 0
+non-positive prices: 0
+```
+
+Observed price distribution:
+
+```text
+minimum price: 11600
+maximum price: 81400
+average price: 35186.99
+```
+
+These values are numerically consistent with plausible monthly residential rents in INR and do not contradict the documented interpretation of rental `price` as monthly rent.
+
+Summing the `price` field across all 123 retrievable matching rental records produced:
+
+```text
+4328000
+```
+
+### Result
+
+**Confirmed.**
+
+The assigned locality `Sector 49` maps unambiguously to the rental locality value `sector 49` using lowercase and whitespace normalization.
+
+Exactly 123 retrievable rental records matched the assigned locality.
+
+Every matching rental record contained a numeric, positive `price` value.
+
+No evidence was found contradicting the documented interpretation of rental `price` as monthly rent in INR.
+
+The reproducible Q5 result is:
+
+```text
+total_monthly_rent = 4328000
+```
+
+### Impact
+
+For Q5, locality matching should use normalized text rather than case-sensitive comparison.
+
+The final answer must be derived from all 123 matching retrievable rental records:
+
+```text
+SUM(price) = 4328000
+```
+
+This investigation did not identify a rental-price unit discrepancy and should be preserved as an example of a documented behavior that was checked and found consistent with the retrieved data.

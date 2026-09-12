@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 
 
@@ -41,6 +41,83 @@ CRORE_TO_INR = 10_000_000
 # min above 10  = 41.5
 PROJECT_UNIT_THRESHOLD = 10
 
+
+IST = timezone(
+    timedelta(
+        hours=5,
+        minutes=30,
+    )
+)
+
+REFERENCE = datetime.fromisoformat(
+    "2026-09-10T00:00:00+05:30"
+)
+
+Q8_WINDOW_START = (
+    REFERENCE - timedelta(days=7)
+)
+
+def compute_q8():
+    snapshot = load_snapshot(
+        LISTINGS_PATH
+    )
+
+    metadata = snapshot["metadata"]
+    listings = snapshot["results"]
+
+    if (
+        len(listings)
+        != metadata["records_retrieved"]
+    ):
+        raise RuntimeError(
+            "Listing snapshot metadata does not "
+            "match stored records."
+        )
+
+    if metadata["final_has_more"] is not False:
+        raise RuntimeError(
+            "Listing snapshot did not reach "
+            "the end of pagination."
+        )
+
+    qualifying = 0
+
+    for listing in listings:
+        listing_id = listing.get(
+            "listing_id"
+        )
+
+        raw = listing.get(
+            "posted_at"
+        )
+
+        if not isinstance(raw, str):
+            raise RuntimeError(
+                f"{listing_id}: invalid posted_at"
+            )
+
+        parsed = datetime.fromisoformat(
+            raw
+        )
+
+        if parsed.tzinfo is not None:
+            raise RuntimeError(
+                f"{listing_id}: expected naive "
+                "posted_at for observed dataset."
+            )
+
+        posted_at = parsed.replace(
+            tzinfo=IST
+        )
+
+        if (
+            Q8_WINDOW_START
+            <= posted_at
+            < REFERENCE
+        ):
+            qualifying += 1
+
+    return qualifying
 
 def load_snapshot(path):
     if not path.exists():
@@ -378,6 +455,8 @@ def main():
 
     q5, q5_record_count = compute_q5()
 
+    q8 = compute_q8()
+
     q7 = compute_q7()
 
     print(
@@ -388,6 +467,12 @@ def main():
     print("Q1")
     print(
         f"total_listing_records: {q1}"
+    )
+
+    print()
+    print("Q8")
+    print(
+        f"listings_last_7_days: {q8}"
     )
 
     print()

@@ -248,3 +248,69 @@ is_live == true
 ```
 
 rather than assuming the endpoint performs the filtering server-side.
+
+
+## Listing Timestamps
+
+Observed `posted_at` values from all 3500 retrievable sale listings are timezone-naive ISO datetime strings.
+
+Example:
+
+```text
+2026-09-09T23:01:00
+```
+
+Observed across the complete snapshot:
+
+```text
+timezone-naive timestamps: 3500
+parse failures: 0
+```
+
+The documented UTC `Z` representation was not observed.
+
+For assignment calculations that use the fixed IST reference, the observed naive timestamps are interpreted using the runtime service timezone:
+
+```text
+Asia/Kolkata
+UTC+05:30
+```
+
+For Q8, the required interval is:
+
+```text
+2026-09-03T00:00:00+05:30
+<= posted_at <
+2026-09-10T00:00:00+05:30
+```
+
+Using the observed service timezone produced:
+
+```text
+listings_last_7_days = 129
+```
+
+Application code must not assume `posted_at` includes an explicit timezone.
+
+---
+
+## Sale Listing Detail Endpoint
+
+The documented endpoint:
+
+```http
+GET /v1/listing/{listing_id}
+```
+
+did not return records for tested IDs that were known to exist in the `/v1/listings` collection.
+
+Eight existing listing IDs were tested and each returned:
+
+```text
+HTTP 404
+{"detail":"Not Found"}
+```
+
+Therefore the application must not currently rely on the documented detail endpoint.
+
+Listing-detail routes in the frontend should be built from listing data retrieved through the functioning collection endpoint unless another working server-side detail route is subsequently discovered.

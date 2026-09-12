@@ -1392,3 +1392,154 @@ is_live == true
 The inactive records are evidence that the documented server-side exclusion of inactive listings is not reliable.
 
 This is a high-confidence candidate `completeness` discrepancy for the final findings set, supported by record-level evidence IDs.
+
+
+---
+
+## H-010 — Listing timestamps and fixed seven-day window for Q8
+
+### Source
+
+The assignment defines Q8 `listings_last_7_days` using the fixed reference:
+
+`2026-09-10T00:00:00+05:30`
+
+and the interval:
+
+`[REFERENCE - 7 days, REFERENCE)`
+
+Therefore the required interval is:
+
+`2026-09-03T00:00:00+05:30`
+inclusive
+
+through
+
+`2026-09-10T00:00:00+05:30`
+exclusive.
+
+`API_REFERENCE.md` states that timestamps are returned in UTC `Z` format.
+
+### Hypothesis
+
+Determine:
+
+1. whether every retrievable listing contains `posted_at`;
+2. whether all timestamps are parseable and timezone-aware;
+3. which timestamp formats are actually used;
+4. how many retrievable listing records fall inside the assignment's fixed seven-day interval.
+
+### Test
+
+Using all retrievable listing records:
+
+- validate presence and type of `posted_at`;
+- parse ISO-8601 timestamps while preserving timezone information;
+- inspect observed timestamp representations;
+- calculate the earliest and latest timestamps;
+- classify every listing as before the window, inside the window, or at/after the reference;
+- count records satisfying:
+
+`WINDOW_START <= posted_at < REFERENCE`
+
+### Evidence
+Initial timestamp validation across all 3500 retrievable listings showed:
+
+```text
+Missing posted_at: 0
+Non-string posted_at: 0
+Naive/no-timezone timestamps: 3500
+Timezone-aware timestamps: 0
+
+### Evidence
+
+All 3500 retrievable listing records contained `posted_at`.
+
+Observed validation:
+
+```text
+Successfully parsed naive timestamps: 3500
+Parse failures: 0
+```
+
+Every `posted_at` value omitted timezone information.
+
+Representative values:
+
+```text
+2026-08-19T10:52:00
+2026-03-12T16:31:00
+2026-09-09T23:01:00
+```
+
+This contradicts the API reference convention that timestamps are returned as UTC ISO-8601 values with a `Z` suffix.
+
+The assignment fixes the Q8 interval in IST:
+
+```text
+2026-09-03T00:00:00+05:30
+<= posted_at <
+2026-09-10T00:00:00+05:30
+```
+
+Because the returned timestamps were timezone-naive, two interpretations were tested.
+
+Assuming the timestamps represent Asia/Kolkata local time:
+
+```text
+Before window: 3365
+Inside Q8 window: 129
+At/after reference: 6
+```
+
+Assuming the timestamps represent UTC:
+
+```text
+Before window: 3363
+Inside Q8 window: 112
+At/after reference: 25
+```
+
+Therefore the interpretation affects the Q8 answer.
+
+The running `/health` endpoint identifies the service timezone as:
+
+```text
+Asia/Kolkata
+```
+
+and returns its server/reference times using the `+05:30` offset.
+
+The assignment also explicitly states that the Q8 interval is in IST.
+
+The runtime service timezone and assignment reference therefore support interpreting the naive listing timestamps as Asia/Kolkata local time.
+
+Under that interpretation:
+
+```text
+listings_last_7_days = 129
+```
+
+### Result
+
+**Confirmed timestamp-format discrepancy.**
+
+The running listings API does not return `posted_at` timestamps in the documented UTC-`Z` representation.
+
+Instead, all 3500 retrievable listing records returned timezone-naive timestamps.
+
+For Q8, the naive timestamps were interpreted in the runtime service timezone, Asia/Kolkata, consistent with the assignment's IST reference interval.
+
+The reproducible Q8 result is:
+
+```text
+listings_last_7_days = 129
+```
+
+### Impact
+
+Client and analysis code must not assume that `posted_at` contains an explicit UTC timezone.
+
+For the observed dataset, timestamps must be interpreted using the service's Asia/Kolkata timezone before comparisons against the assignment's IST reference.
+
+This is a high-confidence candidate `timestamps` finding.

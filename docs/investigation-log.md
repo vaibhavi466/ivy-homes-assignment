@@ -606,3 +606,385 @@ Using the documented pagination model would cause repeated first-page results an
 
 The pagination mechanism, maximum limit, response metadata, ignored `page` parameter, and inaccurate `total` field are candidate `pagination` discrepancies for the final findings set.
 
+
+
+---
+
+## H-005 — Rentals collection contract
+
+### Source
+
+`API_REFERENCE.md` documents:
+
+```http
+GET /v1/rentals
+```
+
+as a paginated rental collection supporting `page`, `limit`, `locality`, `bhk`, `furnishing`, `sort_by`, and `order`.
+
+The global pagination documentation claims collection endpoints use `page` and `limit`.
+
+Previous investigation of `/v1/listings` showed that the running API instead used offset-based pagination.
+
+### Hypothesis
+
+Determine whether `/v1/rentals`:
+
+1. exists at the documented path;
+2. requires both the assigned API key and logged-in Bearer token;
+3. uses the documented page-based pagination model or the observed offset-based model;
+4. enforces the documented maximum limit;
+5. returns the documented rental field names.
+
+### Test
+
+Compare requests using:
+
+* no credentials;
+* `X-API-Key` only;
+* `X-API-Key` plus Bearer token;
+* `page=2&limit=5`;
+* `offset=5&limit=5`;
+* `limit=200`.
+
+Record:
+
+* HTTP status;
+* pagination metadata;
+* returned record count;
+* representative record field names.
+
+Filters, sorting, units, and full dataset retrieval are intentionally outside the scope of this hypothesis.
+
+### Evidence
+#### Full rental traversal
+
+The rental collection was traversed using the observed offset-based model until the API returned:
+
+```text
+has_more=false
+
+#### Authentication
+
+No credentials:
+
+```text
+401
+{"detail":"missing X-API-Key header"}
+```
+
+`X-API-Key` only:
+
+```text
+401
+{"detail":"missing bearer token - log in at POST /auth/login first"}
+```
+
+`X-API-Key` plus Bearer token:
+
+```text
+200
+```
+
+#### Default pagination
+
+Observed:
+
+```text
+limit=20
+offset=0
+count=20
+total=1207
+has_more=true
+```
+
+Observed top-level response keys:
+
+```text
+limit
+offset
+count
+total
+has_more
+results
+```
+
+#### Documented `page` parameter
+
+`page=2&limit=5` returned:
+
+```text
+offset=0
+count=5
+first listing_id=R6000001
+```
+
+Therefore the documented `page` parameter did not advance retrieval.
+
+#### Observed `offset` parameter
+
+`offset=5&limit=5` returned:
+
+```text
+offset=5
+count=5
+first listing_id=R6000005
+```
+
+This confirms that `offset` controls rental pagination.
+
+#### Limit behaviour
+
+Requesting:
+
+```text
+limit=200
+```
+
+produced:
+
+```text
+limit=50
+count=50
+```
+
+Therefore the observed effective maximum limit is 50.
+
+#### Representative rental fields
+
+Observed fields included:
+
+```text
+listing_id
+locality
+bedroom
+furnishing
+price
+deposit
+maintenance
+carpet_area
+super_builtup_area
+is_live
+posted_at
+```
+
+### Result
+
+**Confirmed with the same broad pagination/authentication discrepancies previously observed on listings.**
+
+For `/v1/rentals`:
+
+* both `X-API-Key` and Bearer token are required;
+* pagination is offset-based;
+* the documented `page` parameter was accepted but did not advance retrieval;
+* the response exposes `limit`, `offset`, `count`, `total`, and `has_more`;
+* the observed effective maximum limit is 50, not the documented 200;
+* representative rental fields were successfully returned.
+
+### Impact
+
+The frontend and analysis tooling must paginate rentals using `offset`, not the documented `page` parameter.
+
+Rental retrieval should use the observed authentication model and should not assume the documented pagination schema is correct.
+
+The full rental dataset must still be traversed to `has_more=false` before using it for Q5.
+
+
+
+
+---
+
+## H-006 — Projects collection contract
+
+### Source
+
+`API_REFERENCE.md` documents:
+
+```http
+GET /v1/projects
+```
+
+as a paginated project collection supporting `page`, `limit`, `locality`, `project_status`, `sort_by`, and `order`.
+
+The global pagination documentation claims collection endpoints use `page` and `limit`.
+
+Previous investigation of `/v1/listings` showed that the running API instead used offset-based pagination.
+
+### Hypothesis
+
+Determine whether `/v1/projects`:
+
+1. exists at the documented path;
+2. requires both the assigned API key and logged-in Bearer token;
+3. uses the documented page-based pagination model or the observed offset-based model;
+4. enforces the documented maximum limit;
+5. returns the documented project field names.
+
+### Test
+
+Compare requests using:
+
+* no credentials;
+* `X-API-Key` only;
+* `X-API-Key` plus Bearer token;
+* `page=2&limit=5`;
+* `offset=5&limit=5`;
+* `limit=200`.
+
+Record:
+
+* HTTP status;
+* pagination metadata;
+* returned record count;
+* representative record field names.
+
+Filters, sorting, units, project/listing count consistency, and full dataset retrieval are intentionally outside the scope of this hypothesis.
+
+### Evidence
+#### Full project traversal
+
+The project collection was traversed using the observed offset-based model until the API returned:
+
+```text
+has_more=false
+
+#### Authentication
+
+No credentials:
+
+```text
+401
+{"detail":"missing X-API-Key header"}
+```
+
+`X-API-Key` only:
+
+```text
+401
+{"detail":"missing bearer token - log in at POST /auth/login first"}
+```
+
+`X-API-Key` plus Bearer token:
+
+```text
+200
+```
+
+#### Default pagination
+
+Observed:
+
+```text
+limit=20
+offset=0
+count=20
+total=366
+has_more=true
+```
+
+Observed top-level response keys:
+
+```text
+limit
+offset
+count
+total
+has_more
+results
+```
+
+#### Documented `page` parameter
+
+`page=2&limit=5` returned:
+
+```text
+offset=0
+count=5
+first project_id=P60001
+```
+
+Therefore the documented `page` parameter did not advance retrieval.
+
+#### Observed `offset` parameter
+
+`offset=5&limit=5` returned:
+
+```text
+offset=5
+count=5
+first project_id=P60006
+```
+
+This confirms that `offset` controls project pagination.
+
+#### Limit behaviour
+
+Requesting:
+
+```text
+limit=200
+```
+
+produced:
+
+```text
+limit=50
+count=50
+```
+
+Therefore the observed effective maximum limit is 50.
+
+#### Representative project fields
+
+Observed fields included:
+
+```text
+project_id
+locality
+project_status
+price_min
+price_max
+min_area_sqft
+max_area_sqft
+total_listings
+```
+
+One representative project returned:
+
+```json
+{
+  "project_id": "P60001",
+  "locality": "golf course road",
+  "price_min": 1.66,
+  "price_max": 4.54,
+  "min_area_sqft": 1223,
+  "max_area_sqft": 2718,
+  "total_listings": 6,
+  "project_status": "ready to move"
+}
+```
+
+The observed project price values do not resemble the documented integer-rupee convention and require dedicated unit verification before use.
+
+### Result
+
+**Confirmed with pagination/authentication discrepancies and a new price-unit hypothesis.**
+
+For `/v1/projects`:
+
+* both `X-API-Key` and Bearer token are required;
+* pagination is offset-based;
+* the documented `page` parameter was accepted but did not advance retrieval;
+* the observed effective maximum limit is 50;
+* representative project fields were returned successfully.
+
+The observed project price values require further investigation before they are interpreted as INR.
+
+### Impact
+
+The frontend and analysis tooling must paginate projects using `offset`.
+
+Project prices must not be displayed or used for Q7 until their real unit has been established.
+
+The full projects dataset must be traversed to `has_more=false` before computing project-based answers.
+

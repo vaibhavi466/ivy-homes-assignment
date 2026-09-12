@@ -185,3 +185,27 @@ total=3201
 on every page during the traversal.
 
 Therefore, for this observed dataset, `total` does not represent the complete number of retrievable listing records and must not be used as the authoritative traversal boundary.
+
+
+## Rentals Collection
+
+### `GET /v1/rentals`
+
+Observed authentication:
+
+```http
+X-API-Key: <assigned API key>
+Authorization: Bearer <access token>
+
+### Full traversal
+
+Observed:
+
+```text
+pages fetched: 27
+records retrieved: 1320
+unique listing IDs: 1320
+repeated ID occurrences: 0
+final offset: 1300
+final count: 20
+final has_more: false

@@ -99,3 +99,89 @@ Authorization: Bearer <access token>
 ```
 
 Neither credential alone was sufficient in testing.
+
+
+
+## Listings Pagination
+
+### `GET /v1/listings`
+
+Observed pagination model:
+
+```text
+offset + limit
+```
+
+Observed response metadata:
+
+```json
+{
+  "limit": 50,
+  "offset": 0,
+  "count": 50,
+  "total": 3201,
+  "has_more": true,
+  "results": []
+}
+```
+
+### Traversal behaviour
+
+Observed default limit:
+
+```text
+20
+```
+
+Observed effective maximum limit:
+
+```text
+50
+```
+
+Requests for limits above 50 were accepted but clamped to 50.
+
+The documented `page` parameter did not advance pagination during testing.
+
+The observed `offset` parameter controls traversal.
+
+Recommended traversal logic:
+
+```text
+offset = 0
+
+repeat:
+    request offset + limit
+    consume results
+
+    if has_more is false:
+        stop
+
+    offset = reported_offset + reported_count
+```
+
+Do not use the reported `total` value as the stopping condition.
+
+### Full listings traversal
+
+Observed:
+
+```text
+pages fetched: 70
+records retrieved: 3500
+unique listing IDs: 3500
+repeated listing ID occurrences: 0
+final offset: 3450
+final count: 50
+final has_more: false
+```
+
+The API reported:
+
+```text
+total=3201
+```
+
+on every page during the traversal.
+
+Therefore, for this observed dataset, `total` does not represent the complete number of retrievable listing records and must not be used as the authoritative traversal boundary.

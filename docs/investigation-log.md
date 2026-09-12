@@ -372,3 +372,237 @@ Using the API-key query-parameter mechanism described in `API_REFERENCE.md` woul
 
 This strengthens the candidate `auth` finding that the documented API-key transport mechanism is incorrect.
 
+
+---
+
+## H-004 — Listings pagination contract
+
+### Source
+
+`API_REFERENCE.md` states that collection endpoints use:
+
+* `page`
+* `limit`
+
+with:
+
+* `page` defaulting to 1;
+* `limit` defaulting to 20;
+* maximum `limit` of 200.
+
+The documented response shape is:
+
+```json
+{
+  "total": 1240,
+  "page": 1,
+  "page_size": 20,
+  "results": []
+}
+```
+
+A successful `/v1/listings` request observed during H-003 instead returned pagination-related fields:
+
+* `limit`
+* `offset`
+* `count`
+* `total`
+* `has_more`
+* `results`
+
+### Hypothesis
+
+Determine the real pagination mechanism used by `/v1/listings`.
+
+Specifically test:
+
+1. The default pagination behaviour.
+2. Whether the documented `page` parameter affects retrieval.
+3. Whether an `offset` parameter controls retrieval.
+4. The actual behaviour of `limit`.
+5. Whether the documented maximum limit of 200 is enforced.
+6. How the endpoint indicates that additional records remain.
+
+### Test
+
+Compare listing requests using:
+
+* no pagination parameters;
+* `page=1&limit=5`;
+* `page=2&limit=5`;
+* `offset=0&limit=5`;
+* `offset=5&limit=5`;
+* `offset=10&limit=5`;
+* `limit=200`;
+* `limit=201`;
+* invalid negative offset.
+
+Record:
+
+* HTTP status;
+* pagination metadata;
+* result count;
+* first and last listing IDs.
+
+### Evidence
+
+Observed default request:
+
+```text
+limit=20
+offset=0
+count=20
+total=3201
+has_more=true
+```
+
+Observed response pagination keys:
+
+```text
+limit
+offset
+count
+total
+has_more
+results
+```
+
+#### Documented `page` parameter
+
+`page=1&limit=5` returned:
+
+```text
+offset=0
+count=5
+first listing_id=100-6000047
+last listing_id=MAG-6000434
+```
+
+`page=2&limit=5` returned the same:
+
+```text
+offset=0
+count=5
+first listing_id=100-6000047
+last listing_id=MAG-6000434
+```
+
+The `page` parameter was accepted but did not advance pagination.
+
+#### Observed `offset` parameter
+
+`offset=0&limit=5` returned the first five records.
+
+`offset=5&limit=5` returned a different next set of five records.
+
+`offset=10&limit=5` returned the following set.
+
+This confirms that `offset`, rather than `page`, controls pagination.
+
+#### Limit behaviour
+
+Requesting:
+
+```text
+limit=200
+```
+
+produced:
+
+```text
+limit=50
+count=50
+```
+
+Requesting:
+
+```text
+limit=201
+```
+
+also produced:
+
+```text
+limit=50
+count=50
+```
+
+Therefore the observed effective maximum limit is 50, not the documented 200.
+
+#### Invalid offset
+
+Requesting:
+
+```text
+offset=-1
+```
+
+returned HTTP 422 with validation indicating that offset must be greater than or equal to zero.
+
+#### Full traversal
+
+The collection was traversed using:
+
+```text
+offset = server-reported offset + server-reported count
+```
+
+until the API itself returned:
+
+```text
+has_more=false
+```
+
+Observed traversal summary:
+
+```text
+pages fetched: 70
+records retrieved: 3500
+unique listing IDs: 3500
+repeated listing ID occurrences: 0
+final offset: 3450
+final count: 50
+final has_more: false
+```
+
+Across every fetched page, the API reported:
+
+```text
+total=3201
+```
+
+However, 3500 distinct listing records were successfully retrieved before the API reported `has_more=false`.
+
+### Result
+
+**Confirmed with multiple documentation discrepancies.**
+
+Observed pagination behaviour for `/v1/listings` is:
+
+* pagination is offset-based;
+* `offset` controls collection traversal;
+* the documented `page` parameter is accepted but does not advance the collection;
+* the response exposes `limit`, `offset`, `count`, `total`, and `has_more`;
+* the documented `page` and `page_size` response fields were not observed;
+* the observed effective maximum limit is 50, not 200;
+* `has_more` correctly identified when traversal reached the end;
+* the reported `total` value did not equal the number of retrievable listing records.
+
+The API reported `total=3201` throughout traversal, while 3500 distinct records were retrieved before `has_more` became false.
+
+### Impact
+
+Client code must not implement pagination using the documented `page` parameter or terminate traversal using the reported `total`.
+
+Reliable traversal for the observed listings endpoint should:
+
+1. start at `offset=0`;
+2. request up to 50 records;
+3. advance using the server-reported `offset + count`;
+4. continue while `has_more=true`;
+5. stop only when `has_more=false`.
+
+Using the documented pagination model would cause repeated first-page results and could prevent complete retrieval of the dataset.
+
+The pagination mechanism, maximum limit, response metadata, ignored `page` parameter, and inaccurate `total` field are candidate `pagination` discrepancies for the final findings set.
+

@@ -93,3 +93,282 @@ The frontend and analysis code must not assume that every API timestamp ends in 
 Timestamp values should be parsed as timezone-aware ISO 8601 values using the offset supplied by the API.
 
 This is a candidate documentation discrepancy under the `timestamps` findings category.
+
+
+---
+
+## H-002 — Login endpoint authentication contract
+
+### Source
+
+`API_REFERENCE.md` documents:
+
+`POST /auth/login`
+
+using an email/password JSON body.
+
+The global authentication section states that every request must carry the API key and documents the key as an `api_key` query parameter.
+
+The documented successful login response contains:
+
+* `token`
+* `token_type`
+* `expires_in`
+* `user`
+
+The documentation states that tokens remain valid for 86400 seconds and that no refresh flow exists.
+
+### Hypothesis
+
+1. `/auth/login` exists at the documented path.
+2. The documented email/password JSON body is accepted.
+3. Login requires the assigned API key.
+4. The documented `api_key` query-parameter mechanism authenticates the request.
+5. A successful response follows the documented token-response structure.
+6. Invalid credentials return an authentication error.
+
+### Test
+
+Performed controlled login requests using:
+
+1. Valid demo credentials with no API key.
+2. Valid demo credentials with the API key supplied using the documented query parameter.
+3. Valid demo credentials with the `X-API-Key` request header indicated by the API error response.
+4. Valid demo email with an incorrect password using the observed API-key mechanism.
+5. A nonexistent demo-style email using the observed API-key mechanism.
+
+Secrets and returned authentication tokens are excluded from the investigation log.
+
+### Evidence
+
+#### No API key
+
+Observed:
+
+```text
+401
+{"detail":"missing X-API-Key header"}
+```
+
+#### API key supplied using documented query parameter
+
+Observed:
+
+```text
+401
+{"detail":"send your key in the X-API-Key request header, not as a query parameter"}
+```
+
+#### Valid credentials with `X-API-Key`
+
+Observed:
+
+```text
+200
+```
+
+Redacted response shape:
+
+```json
+{
+  "access_token": "<REDACTED>",
+  "refresh_token": "<REDACTED>",
+  "token_type": "Bearer",
+  "expires_in": 900,
+  "refresh_url": "/auth/refresh",
+  "user": {
+    "email": "demo1@ivy.homes"
+  }
+}
+```
+
+#### Incorrect password
+
+Observed:
+
+```text
+401
+{"detail":"invalid email or password"}
+```
+
+#### Nonexistent user
+
+Observed:
+
+```text
+401
+{"detail":"invalid email or password"}
+```
+
+### Result
+
+**Partially confirmed with multiple documented discrepancies.**
+
+Confirmed:
+
+* `/auth/login` exists at the documented path.
+* The email/password JSON request body is accepted.
+* An API key is required.
+* `token_type` is `Bearer`.
+* Invalid credentials return HTTP 401.
+* Wrong passwords and nonexistent users return the same generic authentication error.
+
+Rejected:
+
+* The API key is not accepted as the documented `api_key` query parameter.
+* The running API requires the `X-API-Key` request header.
+* The successful response uses `access_token`, not the documented `token` field.
+* The observed access-token lifetime is 900 seconds, not the documented 86400 seconds.
+* A refresh flow does exist.
+* Successful login returns a `refresh_token`.
+* Successful login returns `refresh_url: "/auth/refresh"`.
+* The observed user object contains `email` but does not contain the documented `name` field.
+
+### Impact
+
+The frontend cannot implement authentication correctly from the supplied documentation alone.
+
+It must:
+
+* send the assigned API key using the `X-API-Key` request header;
+* read `access_token` rather than `token`;
+* handle a 15-minute access-token lifetime;
+* account for the observed refresh-token mechanism if the session must remain usable beyond access-token expiry.
+
+This is especially important because the assignment requires the application to remain functional at least thirty minutes after login.
+
+The API-key transport, token schema, token lifetime, and refresh-flow behaviour are candidate `auth` discrepancies for the final findings set.
+
+
+
+
+---
+
+## H-003 — Authentication requirements for listing retrieval
+
+### Source
+
+`API_REFERENCE.md` states that:
+
+1. Every request must carry the assigned API key using the `api_key` query parameter.
+2. After login, the user token should be supplied as a Bearer token on subsequent requests.
+
+H-002 showed that `/auth/login` instead requires the API key in the `X-API-Key` request header.
+
+### Hypothesis
+
+Determine which authentication components `/v1/listings` actually requires:
+
+* API key
+* user Bearer token
+* both
+
+Also determine whether the `X-API-Key` transport behaviour observed during login applies to a normal data endpoint.
+
+### Test
+
+Compare six requests to:
+
+```http
+GET /v1/listings
+```
+
+using:
+
+1. No credentials.
+2. Documented query-parameter API key only.
+3. Observed `X-API-Key` header only.
+4. Bearer token only.
+5. Query-parameter API key plus Bearer token.
+6. `X-API-Key` header plus Bearer token.
+
+Only authentication behaviour is being investigated in this experiment.
+
+### Evidence
+
+#### No credentials
+
+Observed:
+
+```text
+401
+{"detail":"missing X-API-Key header"}
+```
+
+#### Documented query-parameter API key only
+
+Observed:
+
+```text
+401
+{"detail":"send your key in the X-API-Key request header, not as a query parameter"}
+```
+
+#### `X-API-Key` header only
+
+Observed:
+
+```text
+401
+{"detail":"missing bearer token - log in at POST /auth/login first"}
+```
+
+#### Bearer token only
+
+Observed:
+
+```text
+401
+{"detail":"missing X-API-Key header"}
+```
+
+#### Documented query-parameter API key + Bearer token
+
+Observed:
+
+```text
+401
+{"detail":"send your key in the X-API-Key request header, not as a query parameter"}
+```
+
+#### `X-API-Key` header + Bearer token
+
+Observed:
+
+```text
+200
+```
+
+The successful response contained listing collection data.
+
+### Result
+
+**Confirmed with a documentation discrepancy.**
+
+For `/v1/listings`:
+
+* The assigned API key is required.
+* A logged-in user Bearer token is also required.
+* The API key must be sent in the `X-API-Key` request header.
+* The documented `api_key` query parameter is explicitly rejected.
+* Supplying only the API key is insufficient.
+* Supplying only the Bearer token is insufficient.
+* Supplying both `X-API-Key` and `Authorization: Bearer ...` succeeds.
+
+The `X-API-Key` behaviour observed during login therefore also applies to a normal protected data endpoint.
+
+### Impact
+
+The frontend API client must attach both:
+
+```http
+X-API-Key: <assigned key>
+Authorization: Bearer <access token>
+```
+
+to protected listing requests.
+
+Using the API-key query-parameter mechanism described in `API_REFERENCE.md` would cause the application to fail authentication.
+
+This strengthens the candidate `auth` finding that the documented API-key transport mechanism is incorrect.
+

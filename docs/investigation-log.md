@@ -1102,3 +1102,168 @@ SUM(price) = 4328000
 ```
 
 This investigation did not identify a rental-price unit discrepancy and should be preserved as an example of a documented behavior that was checked and found consistent with the retrieved data.
+
+
+
+
+
+
+---
+
+## H-008 — Project price units and Q7 interpretation
+
+### Source
+
+The assignment asks for:
+
+`costliest_project`
+
+defined as the project with the highest maximum price, returned as:
+
+```json
+{
+  "project_id": "...",
+  "price_max_inr": 0
+}
+```
+
+`API_REFERENCE.md` documents project `price_min` and `price_max` as values in INR.
+
+However, representative project records returned values such as:
+
+```text
+price_min=1.66
+price_max=4.54
+```
+
+which do not resemble literal INR prices for residential projects.
+
+### Hypothesis
+
+Determine:
+
+1. whether project prices use one consistent unit or multiple numeric scales;
+2. whether the documented INR interpretation is incorrect;
+3. what normalization rule, if any, converts project prices to INR;
+4. whether the apparent cases where `price_min > price_max` are caused by mixed units rather than reversed field meanings;
+5. which project has the highest normalized `price_max` for Q7.
+
+### Test
+
+Using all retrievable project records:
+
+* validate `price_min` and `price_max`;
+* inspect the complete value distribution;
+* count apparent cases where `price_min > price_max`;
+* rank projects by raw `price_max`;
+* compare project prices with sale listing prices linked through `project_id` as a plausibility cross-check;
+* test candidate lakh/crore conversions across the complete project dataset;
+* verify whether normalization restores `price_min <= price_max`;
+* do not finalize Q7 until a consistent normalization rule is supported by the data.
+
+### Evidence
+
+Full-dataset unit analysis covered all 400 retrievable projects and all 800 `price_min` / `price_max` values.
+
+Two completely separated numeric clusters were observed:
+
+```text
+values < 10: 610
+maximum value < 10: 5.83
+
+values >= 10: 190
+minimum value >= 10: 41.5
+```
+
+No project-price values occurred between `5.83` and `41.5`.
+
+Cross-checking project records against INR-denominated sale listings linked by `project_id` indicated that:
+
+```text
+raw value < 10
+→ crores
+
+raw value >= 10
+→ lakhs
+```
+
+The conversion tested across the complete project dataset was therefore:
+
+```text
+value < 10
+→ value × 10,000,000 INR
+
+value >= 10
+→ value × 100,000 INR
+```
+
+Before normalization:
+
+```text
+price_min > price_max: 184 projects
+```
+
+After applying the mixed-unit normalization independently to both `price_min` and `price_max`:
+
+```text
+price_min_inr > price_max_inr: 0 projects
+```
+
+Thus the single observed conversion rule restored valid price-range ordering for every retrievable project.
+
+The highest normalized `price_max` values were:
+
+```text
+P60060 → raw 5.83 → ₹58,300,000
+P60227 → raw 5.66 → ₹56,600,000
+P60355 → raw 5.56 → ₹55,600,000
+P60231 → raw 5.32 → ₹53,200,000
+P60280 → raw 5.26 → ₹52,600,000
+```
+
+The highest normalized maximum price belonged to:
+
+```text
+project_id: P60060
+raw price_max: 5.83
+price_max_inr: 58300000
+```
+
+### Result
+
+**Confirmed mixed-unit project-price encoding.**
+
+The observed project `price_min` and `price_max` fields are not consistently stored as INR despite the API reference documenting them as INR values.
+
+The complete retrievable dataset supports two separate unit encodings:
+
+```text
+raw value < 10  → crore
+raw value >= 10 → lakh
+```
+
+Applying those conversions independently to each price field resolves all 184 apparent raw range inversions.
+
+The reproducible Q7 result is:
+
+```json
+{
+  "project_id": "P60060",
+  "price_max_inr": 58300000
+}
+```
+
+### Impact
+
+Project prices must be normalized before:
+
+* displaying prices in the frontend;
+* comparing project prices;
+* identifying the costliest project;
+* performing project-price analytics.
+
+Using the raw values as literal INR would produce incorrect prices.
+
+Using raw numeric ordering without unit normalization would also incorrectly rank projects such as those containing values around `80–99` above projects whose low-single-digit values represent crores.
+
+This is a high-confidence candidate `units` discrepancy for the final findings set.

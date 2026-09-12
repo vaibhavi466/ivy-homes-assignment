@@ -7,12 +7,39 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
+# ---------------------------------------------------------------------
+# Raw data snapshots
+# ---------------------------------------------------------------------
+
 LISTINGS_PATH = Path("data/raw/listings.json")
 RENTALS_PATH = Path("data/raw/rentals.json")
+PROJECTS_PATH = Path("data/raw/projects.json")
 
-ASSIGNED_LOCALITY = os.getenv(
-    "IVY_ASSIGNED_LOCALITY"
-)
+
+# ---------------------------------------------------------------------
+# Assignment configuration
+# ---------------------------------------------------------------------
+
+ASSIGNED_LOCALITY = os.getenv("IVY_ASSIGNED_LOCALITY")
+
+
+# ---------------------------------------------------------------------
+# Observed project-price unit conversion
+# ---------------------------------------------------------------------
+
+LAKH_TO_INR = 100_000
+CRORE_TO_INR = 10_000_000
+
+# Full project analysis showed:
+#
+# values < 10  -> crore
+# values >= 10 -> lakh
+#
+# Observed clusters:
+# max below 10  = 5.83
+# min above 10  = 41.5
+PROJECT_UNIT_THRESHOLD = 10
 
 
 def load_snapshot(path):
@@ -39,6 +66,11 @@ def normalize_text(value):
         .split()
     )
 
+
+# ---------------------------------------------------------------------
+# Q1
+# total_listing_records
+# ---------------------------------------------------------------------
 
 def compute_q1():
     snapshot = load_snapshot(
@@ -82,7 +114,7 @@ def compute_q1():
     ):
         raise RuntimeError(
             "Duplicate listing_id values exist "
-            "in listings snapshot."
+            "in the listings snapshot."
         )
 
     if (
@@ -96,6 +128,11 @@ def compute_q1():
 
     return retrieved_count
 
+
+# ---------------------------------------------------------------------
+# Q5
+# total_monthly_rent
+# ---------------------------------------------------------------------
 
 def compute_q5():
     if not ASSIGNED_LOCALITY:
@@ -142,8 +179,7 @@ def compute_q5():
 
     if not matching_rentals:
         raise RuntimeError(
-            "No rentals matched the assigned "
-            "locality."
+            "No rentals matched the assigned locality."
         )
 
     invalid_price_ids = []
@@ -179,10 +215,123 @@ def compute_q5():
     )
 
 
+# ---------------------------------------------------------------------
+# Project price normalization
+# ---------------------------------------------------------------------
+
+def project_price_to_inr(value):
+    if not isinstance(
+        value,
+        (int, float),
+    ):
+        raise RuntimeError(
+            f"Invalid project price: {value}"
+        )
+
+    if value < PROJECT_UNIT_THRESHOLD:
+        return round(
+            value * CRORE_TO_INR
+        )
+
+    return round(
+        value * LAKH_TO_INR
+    )
+
+
+# ---------------------------------------------------------------------
+# Q7
+# costliest_project
+# ---------------------------------------------------------------------
+
+def compute_q7():
+    snapshot = load_snapshot(
+        PROJECTS_PATH
+    )
+
+    metadata = snapshot["metadata"]
+    projects = snapshot["results"]
+
+    if (
+        len(projects)
+        != metadata["records_retrieved"]
+    ):
+        raise RuntimeError(
+            "Project snapshot metadata does not "
+            "match stored records."
+        )
+
+    if (
+        metadata["final_has_more"]
+        is not False
+    ):
+        raise RuntimeError(
+            "Project snapshot did not reach "
+            "the end of pagination."
+        )
+
+    normalized_projects = []
+
+    for project in projects:
+        project_id = project.get(
+            "project_id"
+        )
+
+        if not project_id:
+            raise RuntimeError(
+                "A project is missing project_id."
+            )
+
+        price_min = project.get(
+            "price_min"
+        )
+
+        price_max = project.get(
+            "price_max"
+        )
+
+        price_min_inr = project_price_to_inr(
+            price_min
+        )
+
+        price_max_inr = project_price_to_inr(
+            price_max
+        )
+
+        # Our unit interpretation should restore
+        # correct price-range ordering.
+        if price_min_inr > price_max_inr:
+            raise RuntimeError(
+                "Normalized project range is "
+                f"inverted for {project_id}: "
+                f"{price_min_inr} > {price_max_inr}"
+            )
+
+        normalized_projects.append(
+            {
+                "project_id": project_id,
+                "price_max_inr": price_max_inr,
+            }
+        )
+
+    winner = max(
+        normalized_projects,
+        key=lambda project:
+            project["price_max_inr"],
+    )
+
+    return winner
+
+
+# ---------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------
+
 def main():
     q1 = compute_q1()
 
     q5, q5_record_count = compute_q5()
+
+    q7 = compute_q7()
 
     print(
         "=== Reproducible Baseline Answers ==="
@@ -202,6 +351,13 @@ def main():
     print(
         f"qualifying rental records: "
         f"{q5_record_count}"
+    )
+
+    print()
+    print("Q7")
+    print(
+        "costliest_project: "
+        f"{q7}"
     )
 
 

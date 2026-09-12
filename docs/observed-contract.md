@@ -209,3 +209,19 @@ repeated ID occurrences: 0
 final offset: 1300
 final count: 20
 final has_more: false
+
+
+## Project Price Units
+
+Observed `/v1/projects` price values do not use one uniform INR representation.
+
+Across all 400 retrievable projects, 800 total `price_min` / `price_max` values formed two separated clusters:
+
+```text
+< 10:
+    610 values
+    maximum = 5.83
+
+>= 10:
+    190 values
+    minimum = 41.5

@@ -4150,3 +4150,171 @@ redirect to login
 
 The frontend must not assume that `/auth/logout` revokes credentials on the
 server.
+
+
+
+## H-024 — Favourites API availability
+
+### Documentation claim
+
+The API reference documents a favourites resource supporting:
+
+```text
+GET    /v1/favourites
+POST   /v1/favourites
+DELETE /v1/favourites/{listing_id}
+```
+
+This feature is important because the application requirements include saved
+listings that can be added, removed and listed per user.
+
+### Documented endpoint testing
+
+Using valid authenticated demo-user sessions:
+
+```text
+GET /v1/favourites
+```
+
+returned:
+
+```text
+HTTP 404
+{"detail": "Not Found"}
+```
+
+for both tested demo users.
+
+The documented create request:
+
+```text
+POST /v1/favourites
+
+{
+  "id": "100-6000047"
+}
+```
+
+also returned:
+
+```text
+HTTP 404
+{"detail": "Not Found"}
+```
+
+The documented delete request:
+
+```text
+DELETE /v1/favourites/100-6000047
+```
+
+returned:
+
+```text
+HTTP 404
+{"detail": "Not Found"}
+```
+
+The responses were generic framework-level `Not Found` responses rather than
+resource-specific errors.
+
+### Alternate-path investigation
+
+To rule out a simple spelling mismatch, the following plausible collection and
+singular routes were checked without mutating account state:
+
+```text
+GET /v1/favourites
+GET /v1/favorites
+GET /v1/favourite
+GET /v1/favorite
+```
+
+All four returned:
+
+```text
+HTTP 404
+{"detail": "Not Found"}
+```
+
+Therefore no obvious British/American spelling variant exposes the documented
+favourites feature.
+
+### Persistence and user-isolation tests
+
+The original lifecycle probe attempted to test:
+
+```text
+add favourite
+list favourite
+reload persistence
+user isolation
+logout/re-login persistence
+delete favourite
+```
+
+However, every favourites request returned HTTP 404 before any favourite could
+be created.
+
+Therefore no claim is made that persistence or user isolation themselves are
+broken.
+
+They are classified as untestable because the underlying documented resource is
+missing.
+
+### Result
+
+Confirmed discrepancy:
+
+```text
+The documented favourites API is missing.
+```
+
+The following documented operations are unavailable:
+
+```text
+GET    /v1/favourites
+POST   /v1/favourites
+DELETE /v1/favourites/{listing_id}
+```
+
+Likely spelling alternatives were also unavailable.
+
+### Finding strategy
+
+This should be represented as one `missing_endpoint` finding rather than three
+separate findings.
+
+GET, POST and DELETE all fail because the same documented favourites resource
+does not exist.
+
+### Frontend impact
+
+The frontend cannot implement saved listings using the documented backend API.
+
+A fallback is required.
+
+The safest fallback is browser persistence namespaced by the logged-in user's
+email:
+
+```text
+ivy:favourites:demo1@ivy.homes
+ivy:favourites:demo2@ivy.homes
+ivy:favourites:demo3@ivy.homes
+```
+
+Each value can contain a JSON array of saved listing IDs.
+
+This provides:
+
+```text
+add
+remove
+list
+reload persistence
+logout/login persistence on the same browser
+per-user isolation on the same browser
+```
+
+The frontend should not pretend that these favourites are server-synchronized.
+They are a compatibility fallback for the missing documented API.

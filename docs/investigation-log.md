@@ -2430,3 +2430,421 @@ same area normalization logic to avoid overstating PPSF for affected
 
 Q4 corrupt listings and Q9 fake listings must also be excluded from this
 specific assignment metric.
+
+
+
+---
+
+## H-017 — Project `total_listings` consistency and Q10
+
+### Documentation claim
+
+The project API exposes `total_listings` and claims that it is the number of
+listings currently available for that project and that it always agrees with
+the listings endpoint when filtered by `project_id`.
+
+Q10 explicitly asks how many projects report an incorrect listing count.
+
+### Hypothesis
+
+Some project `total_listings` values may disagree with the actual retrievable
+sale-listing records associated with that project's `project_id`.
+
+There is also an ambiguity around whether "currently available" means:
+
+1. every retrievable listing record associated with the project; or
+2. only associated records having `is_live == true`.
+
+Both interpretations will be tested before Q10 is finalized.
+
+### Test
+
+Using the complete locally retrieved datasets:
+
+1. group all sale listings by `project_id`;
+2. separately group live sale listings by `project_id`;
+3. compare every project's declared `total_listings` with both counts;
+4. inspect mismatch direction and magnitude;
+5. verify whether any listing references a project ID absent from the projects
+   endpoint;
+6. separately test the documented `/v1/listings?project_id=...` behavior before
+   relying upon that filter.
+
+### Evidence
+
+### Evidence
+
+The complete local snapshots contained:
+
+```text
+sale listing records: 3500
+project records: 400
+```
+
+Every listing carrying a `project_id` referenced an existing record from the
+projects endpoint:
+
+```text
+distinct project IDs used by listings: 396
+project IDs absent from projects dataset: 0
+```
+
+Two interpretations of project `total_listings` were compared.
+
+Against every associated retrievable listing record:
+
+```text
+projects matching declared count: 105
+projects with mismatched count: 295
+```
+
+Against only associated records having `is_live == true`:
+
+```text
+projects matching declared count: 294
+projects with mismatched count: 106
+```
+
+The large improvement from 105 matches to 294 matches strongly indicates that
+`total_listings` represents currently available/live listings rather than all
+historical listing records.
+
+This is also visible in individual projects. For example:
+
+```text
+P60001
+declared:    6
+all records: 7
+live:        6
+
+P60002
+declared:    3
+all records: 7
+live:        3
+
+P60004
+declared:    8
+all records: 9
+live:        8
+```
+
+The aggregate values were:
+
+```text
+sum of project total_listings: 2031
+associated listing records:    2249
+associated live records:       1809
+```
+
+Although most project counts agree with live records, 106 of the 400 projects
+still disagree.
+
+The documented `project_id` filter will be tested separately before the final
+Q10 value is locked.
+
+
+### Evidence
+
+The complete local snapshots contained:
+
+```text
+sale listing records: 3500
+project records: 400
+```
+
+Every non-null listing `project_id` referenced an existing project:
+
+```text
+distinct project IDs used by listings: 396
+project IDs absent from projects dataset: 0
+```
+
+Project `total_listings` was compared against two possible interpretations.
+
+Against every associated retrievable listing record:
+
+```text
+matching projects: 105
+mismatching projects: 295
+```
+
+Against associated records having `is_live == true`:
+
+```text
+matching projects: 294
+mismatching projects: 106
+```
+
+This strongly establishes that `total_listings` is intended to represent
+currently available/live listings.
+
+Examples where the declared value correctly matches the live population but
+not the complete historical population include:
+
+```text
+P60001
+declared: 6
+all records: 7
+live records: 6
+
+P60002
+declared: 3
+all records: 7
+live records: 3
+
+P60004
+declared: 8
+all records: 9
+live records: 8
+```
+
+However, 106 projects still disagree with their actual live listing count.
+
+Examples include:
+
+```text
+P60006  declared 4   live 10
+P60011  declared 0   live 9
+P60012  declared 0   live 5
+P60017  declared 9   live 2
+P60021  declared 3   live 6
+P60022  declared 7   live 5
+P60027  declared 16  live 7
+P60030  declared 20  live 6
+P60035  declared 0   live 2
+P60039  declared 8   live 3
+P60040  declared 21  live 7
+P60042  declared 0   live 4
+P60046  declared 10  live 8
+P60048  declared 2   live 7
+P60050  declared 0   live 4
+P60057  declared 5   live 3
+P60063  declared 15  live 4
+P60073  declared 0   live 3
+P60074  declared 0   live 6
+P60075  declared 1   live 6
+```
+
+The documented cross-check endpoint was also tested.
+
+Requests such as:
+
+```text
+GET /v1/listings?project_id=P60001
+GET /v1/listings?project_id=P60006
+GET /v1/listings?project_id=P60022
+```
+
+did not filter by project.
+
+Each request returned the same general listing page with unrelated project IDs,
+a response total of 3201, and records whose `project_id` did not match the
+requested projec
+
+
+### Evidence
+
+The complete local snapshots contained:
+
+```text
+sale listing records: 3500
+project records: 400
+```
+
+Every non-null listing `project_id` referenced an existing project:
+
+```text
+distinct project IDs used by listings: 396
+project IDs absent from projects dataset: 0
+```
+
+Project `total_listings` was compared against two possible interpretations.
+
+Against every associated retrievable listing record:
+
+```text
+matching projects: 105
+mismatching projects: 295
+```
+
+Against associated records having `is_live == true`:
+
+```text
+matching projects: 294
+mismatching projects: 106
+```
+
+This strongly establishes that `total_listings` is intended to represent
+currently available/live listings.
+
+Examples where the declared value correctly matches the live population but
+not the complete historical population include:
+
+```text
+P60001
+declared: 6
+all records: 7
+live records: 6
+
+P60002
+declared: 3
+all records: 7
+live records: 3
+
+P60004
+declared: 8
+all records: 9
+live records: 8
+```
+
+However, 106 projects still disagree with their actual live listing count.
+
+Examples include:
+
+```text
+P60006  declared 4   live 10
+P60011  declared 0   live 9
+P60012  declared 0   live 5
+P60017  declared 9   live 2
+P60021  declared 3   live 6
+P60022  declared 7   live 5
+P60027  declared 16  live 7
+P60030  declared 20  live 6
+P60035  declared 0   live 2
+P60039  declared 8   live 3
+P60040  declared 21  live 7
+P60042  declared 0   live 4
+P60046  declared 10  live 8
+P60048  declared 2   live 7
+P60050  declared 0   live 4
+P60057  declared 5   live 3
+P60063  declared 15  live 4
+P60073  declared 0   live 3
+P60074  declared 0   live 6
+P60075  declared 1   live 6
+```
+
+The documented cross-check endpoint was also tested.
+
+Requests such as:
+
+```text
+GET /v1/listings?project_id=P60001
+GET /v1/listings?project_id=P60006
+GET /v1/listings?project_id=P60022
+```
+
+did not filter by project.
+
+Each request returned the same general listing page with unrelated project IDs,
+a response total of 3201, and records whose `project_id` did not match the
+requested project.
+
+Therefore the broken server-side filter cannot be used as the source of truth.
+The count was reconstructed from the complete unfiltered listing dataset
+instead.
+
+
+
+### Result
+
+**Confirmed.**
+
+```text
+projects_with_wrong_listing_count = 106
+```
+
+A project's count is considered correct when:
+
+```text
+project.total_listings
+==
+number of retrievable listing records where:
+    listing.project_id == project.project_id
+    and listing.is_live == true
+```
+
+### Impact
+
+Project pages cannot safely trust `total_listings` for all projects.
+
+For accurate application behavior, project listing counts should be derived
+from the complete retrieved listing dataset where necessary rather than relying
+on the broken `project_id` filter.
+
+
+
+
+---
+
+## H-018 — `/v1/listings` ignores `project_id`
+
+### Documentation claim
+
+The projects documentation states that project `total_listings` always agrees
+with:
+
+```text
+GET /v1/listings?project_id=...
+```
+
+This implies that the listing endpoint supports filtering records by project.
+
+### Test
+
+Requests were made for multiple different project IDs, including projects whose
+declared counts were correct and projects whose counts were incorrect.
+
+Examples:
+
+```text
+project_id=P60001
+project_id=P60002
+project_id=P60006
+project_id=P60011
+project_id=P60022
+```
+
+### Evidence
+
+The responses did not change according to the requested project.
+
+For example, requesting:
+
+```text
+GET /v1/listings?project_id=P60001
+```
+
+returned 50 records containing many unrelated project IDs and records with a
+null `project_id`.
+
+The response reported:
+
+```text
+count: 50
+total: 3201
+wrong project records on page: 50
+filter honored: false
+```
+
+The same behavior was reproduced for all sampled project IDs.
+
+### Result
+
+**Confirmed documentation discrepancy.**
+
+`project_id` is ignored by `/v1/listings`.
+
+### Impact
+
+Clients cannot retrieve a project's listings by trusting the documented
+project-specific query.
+
+Project/listing relationships must instead be reconstructed client-side from
+the complete listing dataset.
+
+Candidate submission finding category:
+
+```text
+filters
+```

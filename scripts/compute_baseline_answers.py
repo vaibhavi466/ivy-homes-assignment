@@ -4,8 +4,9 @@ from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 import math
-from collections import defaultdict
+from collections import Counter, defaultdict
 from itertools import combinations
+
 
 load_dotenv()
 
@@ -816,6 +817,40 @@ def compute_q7():
 
     return winner
 
+def compute_q10():
+    listings_snapshot = load_snapshot(
+        LISTINGS_PATH
+    )
+
+    projects_snapshot = load_snapshot(
+        PROJECTS_PATH
+    )
+
+    listings = listings_snapshot["results"]
+    projects = projects_snapshot["results"]
+
+    live_counts = Counter(
+        listing["project_id"]
+        for listing in listings
+        if (
+            listing.get("project_id")
+            is not None
+            and listing.get("is_live")
+            is True
+        )
+    )
+
+    wrong_count = sum(
+        project.get("total_listings")
+        != live_counts.get(
+            project["project_id"],
+            0,
+        )
+        for project in projects
+    )
+
+    return wrong_count
+
 
 CORRUPT_LISTING_IDS = {
     "100-6000323",
@@ -881,6 +916,8 @@ def main():
     q8 = compute_q8()
 
     q9 = compute_q9()
+
+    q10 = compute_q10()
 
     q7 = compute_q7()
 
@@ -952,6 +989,12 @@ def main():
     print(
         "costliest_project: "
         f"{q7}"
+    )
+
+    print()
+    print("Q10")
+    print(
+        f"projects_with_wrong_listing_count: {q10}"
     )
 
 

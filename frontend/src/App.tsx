@@ -17,70 +17,74 @@ import { ProjectsPage } from './pages/ProjectsPage'
 import { RentalsPage } from './pages/RentalsPage'
 import { SavedPage } from './pages/SavedPage'
 
+import { SavedListingsProvider } from './saved/SavedListingsContext'
+
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route
-            path="/login"
-            element={<LoginPage />}
-          />
+        <SavedListingsProvider>
+          <Routes>
+            <Route
+              path="/login"
+              element={<LoginPage />}
+            />
 
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AppShell />}>
-              <Route
-                path="/"
-                element={
-                  <Navigate
-                    to="/listings"
-                    replace
-                  />
-                }
-              />
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppShell />}>
+                <Route
+                  path="/"
+                  element={
+                    <Navigate
+                      to="/listings"
+                      replace
+                    />
+                  }
+                />
 
-              <Route
-                path="/listings"
-                element={<ListingsPage />}
-              />
+                <Route
+                  path="/listings"
+                  element={<ListingsPage />}
+                />
 
-              <Route
-                path="/listings/:id"
-                element={<ListingDetailPage />}
-              />
+                <Route
+                  path="/listings/:id"
+                  element={<ListingDetailPage />}
+                />
 
-              <Route
-                path="/saved"
-                element={<SavedPage />}
-              />
+                <Route
+                  path="/saved"
+                  element={<SavedPage />}
+                />
 
-              <Route
-                path="/rentals"
-                element={<RentalsPage />}
-              />
+                <Route
+                  path="/rentals"
+                  element={<RentalsPage />}
+                />
 
-              <Route
-                path="/projects"
-                element={<ProjectsPage />}
-              />
+                <Route
+                  path="/projects"
+                  element={<ProjectsPage />}
+                />
 
-              <Route
-                path="/insights"
-                element={<InsightsPage />}
-              />
+                <Route
+                  path="/insights"
+                  element={<InsightsPage />}
+                />
+              </Route>
             </Route>
-          </Route>
 
-          <Route
-            path="*"
-            element={
-              <Navigate
-                to="/listings"
-                replace
-              />
-            }
-          />
-        </Routes>
+            <Route
+              path="*"
+              element={
+                <Navigate
+                  to="/listings"
+                  replace
+                />
+              }
+            />
+          </Routes>
+        </SavedListingsProvider>
       </AuthProvider>
     </BrowserRouter>
   )

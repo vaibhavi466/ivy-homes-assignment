@@ -5,9 +5,11 @@ import {
 } from 'react-router-dom'
 
 import { useAuth } from '../auth/AuthContext'
+import { useSavedListings } from '../saved/SavedListingsContext'
 
 export function AppShell() {
   const { session, logout } = useAuth()
+  const { savedCount } = useSavedListings()
   const navigate = useNavigate()
 
   async function handleLogout() {
@@ -30,6 +32,12 @@ export function AppShell() {
 
           <NavLink to="/saved">
             Saved
+
+            {savedCount > 0 && (
+              <span className="nav-count">
+                {savedCount}
+              </span>
+            )}
           </NavLink>
 
           <NavLink to="/rentals">

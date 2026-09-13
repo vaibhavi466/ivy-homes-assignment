@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 
+import { useSavedListings } from '../saved/SavedListingsContext'
 import type { Listing } from '../types/listing'
 import {
   formatArea,
@@ -15,6 +16,15 @@ interface ListingCardProps {
 export function ListingCard({
   listing,
 }: ListingCardProps) {
+  const {
+    isSaved,
+    toggleSaved,
+  } = useSavedListings()
+
+  const saved = isSaved(
+    listing.listing_id,
+  )
+
   const carpetArea =
     getNormalizedCarpetArea(listing)
 
@@ -34,8 +44,16 @@ export function ListingCard({
           </h2>
         </div>
 
-        <span className="listing-live-badge">
-          Active
+        <span
+          className={
+            listing.is_live
+              ? 'listing-live-badge'
+              : 'listing-inactive-badge'
+          }
+        >
+          {listing.is_live
+            ? 'Active'
+            : 'Inactive'}
         </span>
       </div>
 
@@ -93,13 +111,32 @@ export function ListingCard({
           {listing.listing_id}
         </span>
 
-        <Link
-          to={`/listings/${encodeURIComponent(
-            listing.listing_id,
-          )}`}
-        >
-          View details
-        </Link>
+        <div className="listing-card-actions">
+          <button
+            className={
+              saved
+                ? 'save-button saved'
+                : 'save-button'
+            }
+            type="button"
+            aria-pressed={saved}
+            onClick={() =>
+              toggleSaved(
+                listing.listing_id,
+              )
+            }
+          >
+            {saved ? 'Saved' : 'Save'}
+          </button>
+
+          <Link
+            to={`/listings/${encodeURIComponent(
+              listing.listing_id,
+            )}`}
+          >
+            View details
+          </Link>
+        </div>
       </div>
     </article>
   )

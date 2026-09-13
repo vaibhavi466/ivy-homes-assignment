@@ -9,6 +9,7 @@ import {
 
 import { getApiErrorMessage } from '../api/errors'
 import { DetailField } from '../components/DetailField'
+import { useSavedListings } from '../saved/SavedListingsContext'
 import { getListingById } from '../services/listings'
 import type { Listing } from '../types/listing'
 import {
@@ -21,6 +22,11 @@ import {
 
 export function ListingDetailPage() {
   const { id } = useParams()
+
+  const {
+    isSaved,
+    toggleSaved,
+  } = useSavedListings()
 
   const [listing, setListing] =
     useState<Listing | null>(null)
@@ -130,6 +136,10 @@ export function ListingDetailPage() {
     )
   }
 
+  const saved = isSaved(
+    listing.listing_id,
+  )
+
   const carpetArea =
     getNormalizedCarpetArea(listing)
 
@@ -162,17 +172,38 @@ export function ListingDetailPage() {
           </p>
         </div>
 
-        <span
-          className={
-            listing.is_live
-              ? 'listing-live-badge'
-              : 'listing-inactive-badge'
-          }
-        >
-          {listing.is_live
-            ? 'Active'
-            : 'Inactive'}
-        </span>
+        <div className="detail-actions">
+          <span
+            className={
+              listing.is_live
+                ? 'listing-live-badge'
+                : 'listing-inactive-badge'
+            }
+          >
+            {listing.is_live
+              ? 'Active'
+              : 'Inactive'}
+          </span>
+
+          <button
+            className={
+              saved
+                ? 'save-button saved'
+                : 'save-button'
+            }
+            type="button"
+            aria-pressed={saved}
+            onClick={() =>
+              toggleSaved(
+                listing.listing_id,
+              )
+            }
+          >
+            {saved
+              ? 'Saved'
+              : 'Save listing'}
+          </button>
+        </div>
       </div>
 
       {!listing.is_live && (

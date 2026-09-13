@@ -1,10 +1,10 @@
 {
-    "api_key": "IVY26-XXXXXXXXXXXX",
+    "api_key": "IVY26-DDE57B1A14B7",
     "candidate": {
-        "name": "",
-        "email": "",
-        "repo_url": "",
-        "demo_url": ""
+        "name": "Vaibhavi Agrawal",
+        "email": "vaibhavi.20232055@mnnit.ac.in",
+        "repo_url": "https://github.com/vaibhavi466/ivy-homes-assignment",
+        "demo_url": "https://ivy-homes-assignment-tau.vercel.app"
     },
     "answers": {
         "total_listing_records": 3500,

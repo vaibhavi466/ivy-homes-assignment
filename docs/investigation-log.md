@@ -3247,3 +3247,311 @@ listings section is desired, it must be derived client-side from the complete
 listing dataset or omitted.
 
 Rental and project detail pages may safely use their documented endpoints.
+
+
+---
+
+## H-021 — Rental collection contract
+
+### Documentation claims
+
+`GET /v1/rentals` documents support for:
+
+```text
+locality
+bhk
+furnishing
+sort_by
+order
+```
+
+The documented rental object also states that:
+
+```text
+price       = monthly rent in INR
+deposit     = security deposit in INR
+areas       = square feet
+posted_at   = ISO 8601 UTC with Z suffix
+```
+
+### Field contract
+
+The complete local rental snapshot contained:
+
+```text
+1320 records
+```
+
+Every one of the documented rental fields was present in every record.
+
+No documented field was absent.
+
+One additional field was observed:
+
+```text
+is_live
+```
+
+This extra field does not interfere with the documented contract and is not
+treated as a submission discrepancy.
+
+### Money fields
+
+All 1320 rental records had numeric, non-negative money values.
+
+Observed ranges:
+
+```text
+price:
+min = 7300
+max = 91500
+
+deposit:
+min = 19000
+max = 806000
+
+maintenance:
+min = 0
+max = 5000
+```
+
+There were:
+
+```text
+0 non-numeric prices
+0 negative prices
+
+0 non-numeric deposits
+0 negative deposits
+
+0 non-numeric maintenance values
+0 negative maintenance values
+```
+
+The documented interpretation of `price` as monthly rent in rupees is therefore
+consistent with the retrieved data.
+
+### String conventions
+
+The documented lowercase convention was checked for:
+
+```text
+locality
+furnishing
+property_type
+```
+
+Violations:
+
+```text
+locality:      0
+furnishing:    0
+property_type: 0
+```
+
+### Timestamp contract
+
+Every rental had a `posted_at` value.
+
+All 1320 timestamps had a UTC `Z` suffix.
+
+Example values:
+
+```text
+2026-09-07T01:17:00Z
+2026-09-03T13:06:00Z
+2026-08-06T02:15:00Z
+```
+
+Therefore rental timestamps comply with the documented global timestamp
+convention.
+
+This also proves that the previously discovered timezone-naive timestamp issue
+must be scoped specifically to `/v1/listings`, rather than reported as a global
+API timestamp failure.
+
+### Filter verification
+
+The documented rental filters were tested using values present in the complete
+snapshot.
+
+Examples:
+
+```text
+locality=dwarka expressway
+snapshot matches: 153
+returned mismatches: 0
+
+locality=sector 82
+snapshot matches: 147
+returned mismatches: 0
+
+bhk=2
+snapshot matches: 530
+returned mismatches: 0
+
+bhk=3
+snapshot matches: 401
+returned mismatches: 0
+
+furnishing=semi-furnished
+snapshot matches: 463
+returned mismatches: 0
+```
+
+A combined request using locality, bedroom and furnishing together also returned
+only matching records.
+
+Therefore the rental filters themselves work correctly.
+
+### Incorrect filtered totals
+
+Although the returned records obeyed the filters, the response `total` values
+were consistently smaller than the actual complete-snapshot counts.
+
+Examples:
+
+```text
+dwarka expressway
+actual: 153
+reported total: 140
+
+bhk=2
+actual: 530
+reported total: 485
+
+semi-furnished
+actual: 463
+reported total: 423
+```
+
+This is consistent with the already-confirmed rental collection pagination/count
+defect:
+
+```text
+reported unfiltered total = 1207
+retrievable records       = 1320
+```
+
+Therefore these incorrect filtered totals are treated as the same pagination
+metadata discrepancy rather than separate filter failures.
+
+### Sorting
+
+Price ascending sorting works.
+
+For example:
+
+```text
+7300
+7500
+8200
+8900
+8900
+8900
+9100
+...
+```
+
+However:
+
+```text
+sort_by=price&order=desc
+```
+
+returned exactly the same listing IDs in exactly the same ascending order.
+
+The same ASC and DESC identity was also observed in other tested sort requests.
+
+Therefore the documented descending ordering mechanism is ignored.
+
+Because the rental documentation does not enumerate which individual fields are
+valid values for `sort_by`, no field-specific sorting claim is made beyond the
+clearly reproduced `order=desc` failure.
+
+### Area-unit investigation
+
+All rental areas were numeric positive integers.
+
+Validation results:
+
+```text
+missing/non-numeric carpet: 0
+missing/non-numeric super area: 0
+non-positive carpet: 0
+non-positive super area: 0
+carpet > super area: 0
+```
+
+Four records had both carpet area below 300 and super area below 400:
+
+```text
+R6000114  dwelling
+R6000303  100acres
+R6000661  squarelane
+R6001068  zerobroker
+```
+
+All four were plausible 1-BHK rentals, and the values were distributed across
+different sources rather than concentrated in one website.
+
+Website-level area distributions were highly consistent.
+
+For example, median 2-BHK carpet area:
+
+```text
+100acres:   772
+dwelling:   779
+magichomes: 771
+squarelane: 775.5
+zerobroker: 774
+```
+
+Median 3-BHK carpet area:
+
+```text
+100acres:   1119
+dwelling:   1126
+magichomes: 1119.5
+squarelane: 1124.5
+zerobroker: 1135
+```
+
+There is no source-specific low-area cluster comparable to the one found in
+sale listings.
+
+Therefore rental areas are consistent with square feet and require no unit
+conversion.
+
+### Final result
+
+Confirmed working:
+
+```text
+rental object fields
+monthly rent / deposit / maintenance units
+lowercase string convention
+UTC Z timestamps
+locality filter
+bhk filter
+furnishing filter
+combined filters
+rental detail endpoint
+rental area units
+ascending price sorting
+```
+
+Confirmed discrepancy:
+
+```text
+order=desc is ignored
+```
+
+### Frontend impact
+
+Rental prices and areas may be displayed using the API values directly.
+
+The frontend may use server-side rental filters, but must not rely on the
+reported `total` to determine when all records have been retrieved.
+
+Any user-facing descending sort should be performed client-side.

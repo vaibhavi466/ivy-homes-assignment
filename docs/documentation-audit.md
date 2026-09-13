@@ -62,16 +62,18 @@ Status meanings:
 
 ## Rentals
 
-| Claim                              | Status       |
-| ---------------------------------- | ------------ |
-| `/v1/rentals` exists               | CONFIRMED OK |
-| `price` is monthly rent in INR     | CONFIRMED OK |
-| `locality` filter works            | NOT TESTED   |
-| `bhk` filter works                 | NOT TESTED   |
-| `furnishing` filter works          | NOT TESTED   |
-| documented sorting works           | NOT TESTED   |
-| `/v1/rentals/{id}` works           | CONFIRMED OK |
-| documented rental field names hold | PARTIAL      |
+| Claim                              | Status                                     |
+| ---------------------------------- | ------------------------------------------ |
+| `/v1/rentals` exists               | CONFIRMED OK                               |
+| `price` is monthly rent in INR     | CONFIRMED OK                               |
+| `locality` filter works            | CONFIRMED OK                               |
+| `bhk` filter works                 | CONFIRMED OK                               |
+| `furnishing` filter works          | CONFIRMED OK                               |
+| documented sorting works           | CONFIRMED WRONG — descending order ignored |
+| `/v1/rentals/{id}` works           | CONFIRMED OK                               |
+| documented rental field names hold | CONFIRMED OK                               |
+| rental areas are square feet       | CONFIRMED OK                               |
+| rental timestamps are UTC `Z`      | CONFIRMED OK                               |
 
 ## Projects
 

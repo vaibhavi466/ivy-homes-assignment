@@ -14,4 +14,9 @@ export const endpoints = {
 
   rental: (id: string) =>
     `/v1/rentals/${encodeURIComponent(id)}`,
+
+  projects: '/v1/projects',
+
+  project: (id: string) =>
+    `/v1/projects/${encodeURIComponent(id)}`,
 } as const

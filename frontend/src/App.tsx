@@ -13,6 +13,7 @@ import { InsightsPage } from './pages/InsightsPage'
 import { ListingDetailPage } from './pages/ListingDetailPage'
 import { ListingsPage } from './pages/ListingsPage'
 import { LoginPage } from './pages/LoginPage'
+import { ProjectDetailPage } from './pages/ProjectDetailPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { RentalDetailPage } from './pages/RentalDetailPage'
 import { RentalsPage } from './pages/RentalsPage'
@@ -71,6 +72,13 @@ function App() {
                 <Route
                   path="/projects"
                   element={<ProjectsPage />}
+                />
+
+                <Route
+                  path="/projects/:id"
+                  element={
+                    <ProjectDetailPage />
+                  }
                 />
 
                 <Route

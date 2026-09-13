@@ -3883,3 +3883,270 @@ should be performed client-side.
 
 The API-reported `total` must not be used to determine whether all project
 records have been retrieved.
+
+
+---
+
+## H-023 — Authentication refresh and logout lifecycle
+
+### Documentation claims
+
+The authentication documentation states that:
+
+```text
+login returns `token`
+expires_in = 86400
+tokens remain valid for 24 hours
+there is no refresh flow
+POST /auth/logout invalidates the current token server side
+```
+
+Earlier reconnaissance already established that the running login response instead
+contains:
+
+```text
+access_token
+refresh_token
+token_type
+expires_in
+refresh_url
+user
+```
+
+This test investigated the remaining refresh and logout lifecycle.
+
+### Login result
+
+A valid login using the observed `X-API-Key` mechanism returned HTTP 200.
+
+Observed response shape:
+
+```json
+{
+  "access_token": "<redacted>",
+  "refresh_token": "<redacted>",
+  "token_type": "Bearer",
+  "expires_in": 900,
+  "refresh_url": "/auth/refresh",
+  "user": {
+    "email": "demo1@ivy.homes"
+  }
+}
+```
+
+Therefore the running API reports an access-token lifetime of:
+
+```text
+900 seconds
+= 15 minutes
+```
+
+rather than the documented:
+
+```text
+86400 seconds
+= 24 hours
+```
+
+The returned authentication tokens could not be decoded as standard JWTs by the
+probe, so no claim is made about their internal expiry metadata.
+
+### Protected request before refresh
+
+The returned access token successfully authenticated:
+
+```text
+GET /v1/listings?limit=1&offset=0
+HTTP 200
+```
+
+### Refresh endpoint
+
+The login response advertises:
+
+```text
+refresh_url = /auth/refresh
+```
+
+The following request was tested:
+
+```text
+POST /auth/refresh
+X-API-Key: <assigned key>
+
+{
+  "refresh_token": "<redacted>"
+}
+```
+
+Observed:
+
+```text
+HTTP 200
+```
+
+with response shape:
+
+```json
+{
+  "access_token": "<redacted>",
+  "refresh_token": "<redacted>",
+  "token_type": "Bearer",
+  "expires_in": 900,
+  "refresh_url": "/auth/refresh",
+  "user": {
+    "email": "demo1@ivy.homes"
+  }
+}
+```
+
+The refreshed access token successfully authenticated a protected endpoint.
+
+Therefore a working refresh flow exists even though the documentation explicitly
+states that no refresh flow exists.
+
+`POST /auth/refresh` is also absent from the supplied API reference.
+
+### Token values during immediate refresh
+
+In this immediate refresh test:
+
+```text
+access token changed: false
+refresh token changed: false
+```
+
+The same access token remained valid after refreshing.
+
+This does not establish the long-term rotation policy, because the refresh was
+performed immediately after login.
+
+No finding is therefore based on whether token values rotate.
+
+### Logout
+
+The documented endpoint:
+
+```text
+POST /auth/logout
+```
+
+was called using a valid access token.
+
+Observed:
+
+```text
+HTTP 200
+
+{
+  "ok": true,
+  "note": "tokens are stateless; discard them client side"
+}
+```
+
+This directly contradicts the documentation's statement that logout invalidates
+the current token server-side.
+
+### Access token after logout
+
+After successful logout, the same access token was reused against the protected
+listings endpoint.
+
+Observed:
+
+```text
+HTTP 200
+```
+
+The token therefore remained usable after logout.
+
+The original access token also remained usable:
+
+```text
+HTTP 200
+```
+
+### Refresh after logout
+
+The refresh token was then reused after logout:
+
+```text
+POST /auth/refresh
+```
+
+Observed:
+
+```text
+HTTP 200
+```
+
+and the endpoint again returned usable authentication credentials.
+
+Therefore logout does not revoke either the tested access credentials or the
+refresh capability.
+
+### Results
+
+Confirmed documentation discrepancies:
+
+```text
+1. The API reports `expires_in=900`, not the documented 86400 seconds.
+
+2. A refresh flow exists even though the documentation explicitly says there is
+   no refresh flow.
+
+3. `/auth/refresh` is a working endpoint but is absent from the supplied API
+   reference.
+
+4. `/auth/logout` does not invalidate the current token server-side despite the
+   documentation explicitly claiming that it does.
+
+5. Access tokens remain usable after logout.
+
+6. A refresh token remains usable after logout.
+```
+
+### Frontend impact
+
+The application cannot rely on the documented 24-hour access-token lifetime.
+
+Because the assignment requires the application to remain functional for at
+least 30 minutes after login, the frontend should retain both:
+
+```text
+access_token
+refresh_token
+```
+
+and automatically refresh the session before or when the access token stops
+working.
+
+A safe implementation is:
+
+```text
+login
+  ↓
+store access_token + refresh_token
+  ↓
+use access_token for protected requests
+  ↓
+refresh proactively before 15 minutes
+or refresh once after an authentication failure
+  ↓
+retry the original request
+```
+
+Logout must be treated as a client-side session clear:
+
+```text
+call /auth/logout
+  ↓
+remove access_token
+remove refresh_token
+remove persisted user/session data
+  ↓
+redirect to login
+```
+
+The frontend must not assume that `/auth/logout` revokes credentials on the
+server.

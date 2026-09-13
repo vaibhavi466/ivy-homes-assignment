@@ -11,14 +11,13 @@ Status meanings:
 
 ## Authentication
 
-| Claim                                             | Status          |
-| ------------------------------------------------- | --------------- |
-| API key is supplied as query parameter            | CONFIRMED WRONG |
-| Login accepts documented credentials              | CONFIRMED OK    |
-| Login response contains documented token contract | CONFIRMED WRONG |
-| Token remains valid for 24 hours without refresh  | CONFIRMED WRONG |
-| No refresh flow exists                            | CONFIRMED WRONG |
-| `/auth/logout` behaves as documented              | NOT TESTED      |
+| API key uses `api_key` query parameter                | CONFIRMED WRONG |
+| Login email/password body works                       | CONFIRMED OK    |
+| Login returns documented `token` schema               | CONFIRMED WRONG |
+| Access token lasts 24 hours                           | CONFIRMED WRONG |
+| No refresh flow exists                                | CONFIRMED WRONG |
+| `/auth/refresh` exists                                | CONFIRMED WRONG |
+| `/auth/logout` invalidates token server-side          | CONFIRMED WRONG |
 
 ## Global conventions
 
@@ -77,16 +76,22 @@ Status meanings:
 
 ## Projects
 
-| Claim                                         | Status          |
-| --------------------------------------------- | --------------- |
-| `/v1/projects` exists                         | CONFIRMED OK    |
-| project prices are INR                        | CONFIRMED WRONG |
-| `locality` filter works                       | NOT TESTED      |
-| `project_status` filter works                 | NOT TESTED      |
-| documented sorting works                      | NOT TESTED      |
-| `/v1/projects/{id}` works                     | CONFIRMED OK    |
-| `total_listings` agrees with current listings | CONFIRMED WRONG |
-| referenced `project_id` listings filter works | CONFIRMED WRONG |
+| Claim                                          | Status          |
+| ---------------------------------------------- | --------------- |
+| `/v1/projects` exists                          | CONFIRMED OK    |
+| project prices are INR                         | CONFIRMED WRONG |
+| `locality` filter works                        | CONFIRMED OK    |
+| `project_status` filter works                  | CONFIRMED OK    |
+| `sort_by=price_min` works                      | CONFIRMED OK    |
+| `sort_by=price_max` works                      | CONFIRMED OK    |
+| `sort_by=launch_date` works                    | CONFIRMED OK    |
+| `sort_by=total_units` works                    | CONFIRMED OK    |
+| `order=asc/desc` works                         | CONFIRMED WRONG — descending order ignored |
+| `/v1/projects/{id}` works                      | CONFIRMED OK    |
+| project dates use `YYYY-MM-DD`                 | CONFIRMED OK    |
+| project areas are square feet                  | CONFIRMED OK    |
+| `total_listings` agrees with current listings  | CONFIRMED WRONG |
+| referenced `project_id` listings filter works  | CONFIRMED WRONG |
 
 ## Favourites
 

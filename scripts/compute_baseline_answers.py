@@ -246,6 +246,28 @@ def compute_q8():
 
     return qualifying
 
+def compute_q9():
+    snapshot = load_snapshot(
+        LISTINGS_PATH
+    )
+
+    fake_ids = sorted(
+        listing["listing_id"]
+        for listing
+        in snapshot["results"]
+        if (
+            is_number(
+                listing.get("price")
+            )
+            and 0
+            < listing["price"]
+            < 100_000
+        )
+    )
+
+    return fake_ids
+
+
 def load_snapshot(path):
     if not path.exists():
         raise FileNotFoundError(
@@ -796,6 +818,8 @@ def main():
 
     q8 = compute_q8()
 
+    q9 = compute_q9()
+
     q7 = compute_q7()
 
     print(
@@ -828,6 +852,14 @@ def main():
     print(
         f"listings_last_7_days: {q8}"
     )
+
+    print()
+    print("Q9")
+    print(
+        "fake_listing_ids: "
+        f"{q9}"
+    )
+
 
     print()
     print("Q3")

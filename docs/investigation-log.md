@@ -2129,3 +2129,167 @@ Failing to normalize these records would make 323 properties appear roughly
 10.76 times smaller than their actual square-foot areas.
 
 This is a high-confidence candidate `units` finding.
+
+
+
+---
+
+## H-015 — Fake enquiry-generation listings and Q9
+
+### Source
+
+The assignment states that some sale listings are deliberately fake and exist
+to generate enquiries.
+
+Q9 requires the sorted listing IDs of those fake records.
+
+Because Q9 is evaluated on both discoveries and false positives, unusual or
+cheap listings must not automatically be labelled fake.
+
+### Hypothesis
+
+Fake enquiry-generation listings may exhibit one or more reproducible signals,
+including:
+
+- an unusually low advertised price compared with independent advertisements
+  of the same physical property;
+- abnormal normalized price per square foot;
+- suspicious seller/contact reuse across many otherwise unrelated properties;
+- a source-specific pattern among bait-priced listings.
+
+### Test
+
+Using all retrievable sale listings:
+
+1. reuse the confirmed Q2 physical-property resolution logic;
+2. compare advertised prices where the same physical property is listed more
+   than once;
+3. rank the largest same-property price disagreements;
+4. inspect normalized price-per-square-foot outliers;
+5. profile seller/contact reuse.
+
+No listing will be classified as fake until a distinct repeated pattern is
+observed.
+
+### Evidence
+
+Fraud analysis was performed across all 3500 retrievable sale listings.
+
+Seller/contact reuse was initially investigated, but reuse was found to be
+normal in the dataset:
+
+```text
+unique contacts: 593
+contacts appearing on more than one listing: 582
+```
+
+A broad relative-underpricing test also produced 226 listings priced below 65%
+of the median for comparable locality/BHK/property-type records.
+
+Those listings formed a continuous price distribution and many otherwise normal
+contacts appeared repeatedly within it. Therefore ordinary underpricing and
+contact reuse were not treated as sufficient evidence of fake listings.
+
+A separate and sharply isolated price population was found.
+
+Exactly six positive-price sale records had `price < 100000`:
+
+```text
+100-6000678    5030
+MAG-6002472    8010
+100-6000578   14620
+SQU-6000395   17010
+MAG-6002941   17250
+100-6001599   26260
+```
+
+There were:
+
+```text
+6 records below 100000
+0 records from 100000 through 999999
+1 record from 1000000 through 2999999
+```
+
+The next positive sale price after the six-record cluster was:
+
+```text
+ZER-6001884 = 2730000
+```
+
+The adjacent jump from the highest ultra-low price to the next record was:
+
+```text
+26260 -> 2730000
+approximately 103.96x
+```
+
+For five candidates where comparable peer medians were available, their
+price-to-peer-median ratios were approximately:
+
+```text
+0.000629
+0.000730
+0.000747
+0.000762
+0.001195
+```
+
+The next-lowest non-candidate ratio was:
+
+```text
+0.3459
+```
+
+This created a further approximately 289x separation between the isolated
+ultra-low cluster and the broader underpriced population.
+
+The six records were distributed across multiple listing sources:
+
+```text
+100acres: 3
+magichomes: 2
+squarelane: 1
+```
+
+Most were also marked verified, demonstrating that `is_verified` cannot be
+relied upon as a fake-listing indicator.
+
+The associated contacts otherwise published ordinary market-priced listings,
+so fake classification was kept at the individual record level rather than
+expanded to every listing from those contacts.
+
+### Result
+
+**Confirmed high-confidence fake/bait listing cluster.**
+
+The Q9 result is:
+
+```text
+100-6000578
+100-6000678
+100-6001599
+MAG-6002472
+MAG-6002941
+SQU-6000395
+```
+
+The reproducible classification rule is the isolated positive-price cluster:
+
+```text
+0 < price < 100000
+```
+
+This threshold is data-driven rather than arbitrary because no other positive
+sale listings occur anywhere near this range and the next record is priced at
+2730000.
+
+### Impact
+
+These six records must be excluded where the assignment explicitly requires
+fake listings to be excluded, particularly Q6.
+
+The application should also avoid presenting these bait prices as ordinary
+property sale totals without appropriate data-quality handling.
+
+This is a high-confidence `fraud` finding.

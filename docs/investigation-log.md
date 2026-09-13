@@ -4318,3 +4318,165 @@ per-user isolation on the same browser
 
 The frontend should not pretend that these favourites are server-synchronized.
 They are a compatibility fallback for the missing documented API.
+
+
+## H-025 — Analytics summary endpoint
+
+### Documentation claim
+
+The API reference documents:
+
+```text
+GET /v1/analytics/summary
+```
+
+as a pre-computed city analytics endpoint.
+
+The documented response contains:
+
+```text
+city
+total_listings
+median_price
+median_price_per_sqft
+by_locality
+by_bhk
+```
+
+The frontend requirements also explicitly require an Insights screen containing
+whatever this endpoint promises.
+
+### Unauthenticated request
+
+The endpoint was first called without credentials.
+
+Observed:
+
+```text
+GET /v1/analytics/summary
+
+HTTP 404
+{"detail": "Not Found"}
+```
+
+### Authenticated request
+
+The same endpoint was called again using:
+
+```text
+X-API-Key: <assigned key>
+Authorization: Bearer <valid access token>
+```
+
+Observed:
+
+```text
+HTTP 404
+{"detail": "Not Found"}
+```
+
+Because both authenticated and unauthenticated requests return the same generic
+framework-level `Not Found` response, this is not consistent with an ordinary
+authentication failure.
+
+The protected collection endpoints normally produce authentication-specific
+errors when credentials are missing or invalid.
+
+### OpenAPI route discovery
+
+As an additional check, the service was queried at:
+
+```text
+GET /openapi.json
+```
+
+both without credentials and with valid credentials.
+
+Both returned:
+
+```text
+HTTP 404
+{"detail": "Not Found"}
+```
+
+Therefore the service does not expose its OpenAPI route table at the conventional
+FastAPI path.
+
+No discrepancy is reported for `/openapi.json`, because the supplied
+documentation never promised that endpoint.
+
+The OpenAPI result simply means it cannot be used to independently enumerate
+server routes.
+
+### Result
+
+Confirmed discrepancy:
+
+```text
+The documented GET /v1/analytics/summary endpoint is missing.
+```
+
+The response schema itself cannot be tested because no analytics response can be
+retrieved.
+
+Therefore the individual documented fields are classified as untestable rather
+than separately broken.
+
+### Finding strategy
+
+Represent this as one finding:
+
+```text
+endpoint: /v1/analytics/summary
+category: missing_endpoint
+```
+
+Do not create separate findings for:
+
+```text
+city
+total_listings
+median_price
+median_price_per_sqft
+by_locality
+by_bhk
+```
+
+They are all unavailable because the same underlying endpoint is missing.
+
+### Frontend impact
+
+The Insights screen must still be implemented because it is an explicit
+assignment requirement.
+
+The application should compute the promised analytics from the complete
+retrieved listing dataset rather than omit the screen.
+
+The compatibility layer should derive at least:
+
+```text
+city
+total listings
+median price
+median price per square foot
+listing counts by locality
+median price by locality
+listing counts by BHK
+```
+
+The screen should clearly distinguish these client-computed values from a server
+analytics response.
+
+It can additionally expose verified investigation results such as:
+
+```text
+active vs inactive listing records
+duplicate-property resolution
+corrupt records
+suspicious bait-priced records
+project/listing count inconsistencies
+data normalization decisions
+```
+
+This turns the missing backend analytics feature into a resilient frontend
+implementation rather than a broken required screen.

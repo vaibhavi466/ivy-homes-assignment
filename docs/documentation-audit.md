@@ -95,21 +95,21 @@ Status meanings:
 
 ## Favourites
 
-| Claim                              | Status     |
-| ---------------------------------- | ---------- |
-| GET `/v1/favourites` works         | NOT TESTED |
-| POST `/v1/favourites` works        | NOT TESTED |
-| DELETE `/v1/favourites/{id}` works | NOT TESTED |
-| favourites remain user-specific    | NOT TESTED |
-| favourites survive reload/re-login | NOT TESTED |
+| `GET /v1/favourites` works                    | CONFIRMED WRONG |
+| `POST /v1/favourites` works                   | CONFIRMED WRONG |
+| `DELETE /v1/favourites/{id}` works            | CONFIRMED WRONG |
+| favourites persist per user                   | UNTESTABLE — backend endpoint missing |
+| favourites survive reload/re-login            | UNTESTABLE — backend endpoint missing |
 
 ## Analytics
 
-| Claim                                         | Status     |
-| --------------------------------------------- | ---------- |
-| `/v1/analytics/summary` exists                | NOT TESTED |
-| returned aggregate fields match documentation | NOT TESTED |
-| documented aggregates are numerically correct | NOT TESTED |
+| `GET /v1/analytics/summary` exists        | CONFIRMED WRONG |
+| response contains `city`                  | UNTESTABLE — endpoint missing |
+| response contains `total_listings`        | UNTESTABLE — endpoint missing |
+| response contains `median_price`          | UNTESTABLE — endpoint missing |
+| response contains `median_price_per_sqft` | UNTESTABLE — endpoint missing |
+| response contains `by_locality`           | UNTESTABLE — endpoint missing |
+| response contains `by_bhk`                | UNTESTABLE — endpoint missing |
 
 ## Erros 
 | Unknown record IDs return documented 404 JSON errors | CONFIRMED OK |

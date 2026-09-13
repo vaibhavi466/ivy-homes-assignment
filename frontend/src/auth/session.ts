@@ -6,6 +6,15 @@ import type {
 
 const SESSION_STORAGE_KEY = 'ivy.auth.session'
 
+export const AUTH_SESSION_CHANGE_EVENT =
+  'ivy:auth-session-change'
+
+function notifySessionChange() {
+  window.dispatchEvent(
+    new Event(AUTH_SESSION_CHANGE_EVENT),
+  )
+}
+
 export function createSession(
   tokens: AuthTokens,
   user: AuthUser,
@@ -22,6 +31,8 @@ export function saveSession(session: AuthSession) {
     SESSION_STORAGE_KEY,
     JSON.stringify(session),
   )
+
+  notifySessionChange()
 }
 
 export function loadSession(): AuthSession | null {
@@ -44,6 +55,8 @@ export function loadSession(): AuthSession | null {
 
 export function clearSession() {
   localStorage.removeItem(SESSION_STORAGE_KEY)
+
+  notifySessionChange()
 }
 
 export function isSessionExpired(

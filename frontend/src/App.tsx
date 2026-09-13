@@ -1,10 +1,13 @@
 import {
   BrowserRouter,
-  Link,
   Navigate,
   Route,
   Routes,
 } from 'react-router-dom'
+
+import { AuthProvider } from './auth/AuthContext'
+import { ProtectedRoute } from './auth/ProtectedRoute'
+import { AppShell } from './components/AppShell'
 
 import { InsightsPage } from './pages/InsightsPage'
 import { ListingDetailPage } from './pages/ListingDetailPage'
@@ -17,36 +20,68 @@ import { SavedPage } from './pages/SavedPage'
 function App() {
   return (
     <BrowserRouter>
-      <nav>
-        <Link to="/listings">Listings</Link>{' '}
-        <Link to="/saved">Saved</Link>{' '}
-        <Link to="/rentals">Rentals</Link>{' '}
-        <Link to="/projects">Projects</Link>{' '}
-        <Link to="/insights">Insights</Link>
-      </nav>
+      <AuthProvider>
+        <Routes>
+          <Route
+            path="/login"
+            element={<LoginPage />}
+          />
 
-      <Routes>
-        <Route path="/" element={<Navigate to="/listings" replace />} />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppShell />}>
+              <Route
+                path="/"
+                element={
+                  <Navigate
+                    to="/listings"
+                    replace
+                  />
+                }
+              />
 
-        <Route path="/login" element={<LoginPage />} />
+              <Route
+                path="/listings"
+                element={<ListingsPage />}
+              />
 
-        <Route path="/listings" element={<ListingsPage />} />
+              <Route
+                path="/listings/:id"
+                element={<ListingDetailPage />}
+              />
 
-        <Route
-          path="/listings/:id"
-          element={<ListingDetailPage />}
-        />
+              <Route
+                path="/saved"
+                element={<SavedPage />}
+              />
 
-        <Route path="/saved" element={<SavedPage />} />
+              <Route
+                path="/rentals"
+                element={<RentalsPage />}
+              />
 
-        <Route path="/rentals" element={<RentalsPage />} />
+              <Route
+                path="/projects"
+                element={<ProjectsPage />}
+              />
 
-        <Route path="/projects" element={<ProjectsPage />} />
+              <Route
+                path="/insights"
+                element={<InsightsPage />}
+              />
+            </Route>
+          </Route>
 
-        <Route path="/insights" element={<InsightsPage />} />
-
-        <Route path="*" element={<Navigate to="/listings" replace />} />
-      </Routes>
+          <Route
+            path="*"
+            element={
+              <Navigate
+                to="/listings"
+                replace
+              />
+            }
+          />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

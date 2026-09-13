@@ -44,17 +44,17 @@ Status meanings:
 | ----------------------------------------------- | --------------- |
 | `/v1/listings` exists                           | CONFIRMED OK    |
 | Returns active listings only                    | CONFIRMED WRONG |
-| `locality` filter works                         | NOT TESTED      |
-| `bhk` filter works                              | NOT TESTED      |
-| `property_type` filter works                    | NOT TESTED      |
-| `min_price` works                               | NOT TESTED      |
-| `max_price` works                               | NOT TESTED      |
-| `furnishing` works                              | NOT TESTED      |
-| `sort_by=price` works                           | NOT TESTED      |
-| `sort_by=carpet_area` works                     | NOT TESTED      |
-| `sort_by=posted_at` works                       | NOT TESTED      |
-| `sort_by=bedroom` works                         | NOT TESTED      |
-| `order=asc/desc` works                          | NOT TESTED      |
+| `locality` filter works                         | CONFIRMED OK    |
+| `bhk` filter works                              | CONFIRMED OK    |
+| `property_type` filter works                    | CONFIRMED OK    |
+| `min_price` works                               | CONFIRMED OK    |
+| `max_price` works                               | CONFIRMED OK    |
+| `furnishing` works                              | CONFIRMED OK    |
+| `sort_by=price` works                           | CONFIRMED OK    |
+| `sort_by=carpet_area` works                     | CONFIRMED WRONG |
+| `sort_by=posted_at` works                       | CONFIRMED WRONG |
+| `sort_by=bedroom` works                         | CONFIRMED OK    |
+| `order=asc/desc` works                          | CONFIRMED WRONG |
 | Single-listing path `/v1/listing/{id}` exists   | CONFIRMED WRONG |
 | `/v1/listings/{id}/similar` works as documented | NOT TESTED      |
 | Listing areas are sqft                          | CONFIRMED WRONG |

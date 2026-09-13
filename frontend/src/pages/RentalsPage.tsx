@@ -12,6 +12,9 @@ import {
 } from '../services/rentals'
 import type { Rental } from '../types/rental'
 import {
+  useBrowseUrlState,
+} from '../hooks/useBrowseUrlState'
+import {
   DEFAULT_RENTAL_FILTERS,
   filterAndSortRentals,
   getUniqueRentalValues,
@@ -20,17 +23,54 @@ import {
 
 const CLIENT_PAGE_SIZE = 24
 
+const RENTAL_FILTER_PARAM_NAMES: {
+  [Key in keyof RentalFilters]:
+    string
+} = {
+  search: 'q',
+  locality: 'locality',
+  bedroom: 'bhk',
+  propertyType: 'property_type',
+  furnishing: 'furnishing',
+  minRent: 'min_rent',
+  maxRent: 'max_rent',
+  sort: 'sort',
+}
+
+const RENTAL_VALID_VALUES = {
+  sort: [
+    'newest',
+    'oldest',
+    'rent-asc',
+    'rent-desc',
+    'bedroom-asc',
+    'bedroom-desc',
+    'area-asc',
+    'area-desc',
+  ],
+} as const
+
 export function RentalsPage() {
   const [rentals, setRentals] =
     useState<Rental[]>([])
 
-  const [filters, setFilters] =
-    useState<RentalFilters>(
+  const {
+    filters,
+    pageIndex:
+      requestedPageIndex,
+    updateFilter,
+    clearFilters,
+    goToPage,
+  } = useBrowseUrlState({
+    defaults:
       DEFAULT_RENTAL_FILTERS,
-    )
 
-  const [pageIndex, setPageIndex] =
-    useState(0)
+    paramNames:
+      RENTAL_FILTER_PARAM_NAMES,
+
+    validValues:
+      RENTAL_VALID_VALUES,
+  })
 
   const [error, setError] =
     useState<string | null>(
@@ -166,6 +206,12 @@ export function RentalsPage() {
       ),
     )
 
+  const pageIndex =
+    Math.min(
+      requestedPageIndex,
+      totalPages - 1,
+    )
+
   const visibleRentals =
     useMemo(() => {
       const start =
@@ -181,30 +227,6 @@ export function RentalsPage() {
       filteredRentals,
       pageIndex,
     ])
-
-  function updateFilter<
-    Key extends keyof RentalFilters,
-  >(
-    key: Key,
-    value: RentalFilters[Key],
-  ) {
-    setFilters(
-      (current) => ({
-        ...current,
-        [key]: value,
-      }),
-    )
-
-    setPageIndex(0)
-  }
-
-  function clearFilters() {
-    setFilters(
-      DEFAULT_RENTAL_FILTERS,
-    )
-
-    setPageIndex(0)
-  }
 
   if (isLoading) {
     return (
@@ -600,12 +622,11 @@ export function RentalsPage() {
               pageIndex === 0
             }
             onClick={() =>
-              setPageIndex(
-                (current) =>
-                  Math.max(
-                    0,
-                    current - 1,
-                  ),
+              goToPage(
+                Math.max(
+                  0,
+                  pageIndex - 1,
+                ),
               )
             }
           >
@@ -624,13 +645,11 @@ export function RentalsPage() {
               totalPages
             }
             onClick={() =>
-              setPageIndex(
-                (current) =>
-                  Math.min(
-                    totalPages -
-                      1,
-                    current + 1,
-                  ),
+              goToPage(
+                Math.min(
+                  totalPages - 1,
+                  pageIndex + 1,
+                ),
               )
             }
           >

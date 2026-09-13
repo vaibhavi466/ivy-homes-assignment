@@ -12,6 +12,9 @@ import {
 } from '../services/listings'
 import type { Listing } from '../types/listing'
 import {
+  useBrowseUrlState,
+} from '../hooks/useBrowseUrlState'
+import {
   DEFAULT_LISTING_FILTERS,
   filterAndSortListings,
   getUniqueStringValues,
@@ -20,17 +23,54 @@ import {
 
 const CLIENT_PAGE_SIZE = 24
 
+const LISTING_FILTER_PARAM_NAMES: {
+  [Key in keyof ListingFilters]:
+    string
+} = {
+  search: 'q',
+  locality: 'locality',
+  bedroom: 'bhk',
+  propertyType: 'property_type',
+  furnishing: 'furnishing',
+  minPrice: 'min_price',
+  maxPrice: 'max_price',
+  sort: 'sort',
+}
+
+const LISTING_VALID_VALUES = {
+  sort: [
+    'price-asc',
+    'price-desc',
+    'bedroom-asc',
+    'bedroom-desc',
+    'area-asc',
+    'area-desc',
+    'newest',
+    'oldest',
+  ],
+} as const
+
 export function ListingsPage() {
   const [listings, setListings] =
     useState<Listing[]>([])
 
-  const [filters, setFilters] =
-    useState<ListingFilters>(
+  const {
+    filters,
+    pageIndex:
+      requestedPageIndex,
+    updateFilter,
+    clearFilters,
+    goToPage,
+  } = useBrowseUrlState({
+    defaults:
       DEFAULT_LISTING_FILTERS,
-    )
 
-  const [pageIndex, setPageIndex] =
-    useState(0)
+    paramNames:
+      LISTING_FILTER_PARAM_NAMES,
+
+    validValues:
+      LISTING_VALID_VALUES,
+  })
 
   const [error, setError] =
     useState<string | null>(null)
@@ -149,6 +189,12 @@ export function ListingsPage() {
     ),
   )
 
+  const pageIndex =
+    Math.min(
+      requestedPageIndex,
+      totalPages - 1,
+    )
+
   const visibleListings = useMemo(() => {
     const start =
       pageIndex * CLIENT_PAGE_SIZE
@@ -161,28 +207,6 @@ export function ListingsPage() {
     filteredListings,
     pageIndex,
   ])
-
-  function updateFilter<
-    Key extends keyof ListingFilters,
-  >(
-    key: Key,
-    value: ListingFilters[Key],
-  ) {
-    setFilters((current) => ({
-      ...current,
-      [key]: value,
-    }))
-
-    setPageIndex(0)
-  }
-
-  function clearFilters() {
-    setFilters(
-      DEFAULT_LISTING_FILTERS,
-    )
-
-    setPageIndex(0)
-  }
 
   if (isLoading) {
     return (
@@ -520,12 +544,11 @@ export function ListingsPage() {
             type="button"
             disabled={pageIndex === 0}
             onClick={() =>
-              setPageIndex(
-                (current) =>
-                  Math.max(
-                    0,
-                    current - 1,
-                  ),
+              goToPage(
+                Math.max(
+                  0,
+                  pageIndex - 1,
+                ),
               )
             }
           >
@@ -544,12 +567,11 @@ export function ListingsPage() {
               totalPages
             }
             onClick={() =>
-              setPageIndex(
-                (current) =>
-                  Math.min(
-                    totalPages - 1,
-                    current + 1,
-                  ),
+              goToPage(
+                Math.min(
+                  totalPages - 1,
+                  pageIndex + 1,
+                ),
               )
             }
           >

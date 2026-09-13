@@ -14,6 +14,9 @@ import {
 } from '../services/projects'
 import type { Project } from '../types/project'
 import {
+  useBrowseUrlState,
+} from '../hooks/useBrowseUrlState'
+import {
   DEFAULT_PROJECT_FILTERS,
   filterAndSortProjects,
   getUniqueProjectValues,
@@ -24,6 +27,33 @@ import {
 } from '../utils/project'
 
 const CLIENT_PAGE_SIZE = 24
+
+const PROJECT_FILTER_PARAM_NAMES: {
+  [Key in keyof ProjectFilters]:
+    string
+} = {
+  search: 'q',
+  locality: 'locality',
+  status: 'status',
+  developer: 'developer',
+  minBudget: 'min_budget',
+  maxBudget: 'max_budget',
+  sort: 'sort',
+}
+
+const PROJECT_VALID_VALUES = {
+  sort: [
+    'name',
+    'price-min-asc',
+    'price-min-desc',
+    'price-max-asc',
+    'price-max-desc',
+    'launch-newest',
+    'launch-oldest',
+    'units-desc',
+    'units-asc',
+  ],
+} as const
 
 export function ProjectsPage() {
   const [projects, setProjects] =
@@ -39,13 +69,23 @@ export function ProjectsPage() {
       new Map(),
   )
 
-  const [filters, setFilters] =
-    useState<ProjectFilters>(
+  const {
+    filters,
+    pageIndex:
+      requestedPageIndex,
+    updateFilter,
+    clearFilters,
+    goToPage,
+  } = useBrowseUrlState({
+    defaults:
       DEFAULT_PROJECT_FILTERS,
-    )
 
-  const [pageIndex, setPageIndex] =
-    useState(0)
+    paramNames:
+      PROJECT_FILTER_PARAM_NAMES,
+
+    validValues:
+      PROJECT_VALID_VALUES,
+  })
 
   const [error, setError] =
     useState<string | null>(null)
@@ -162,6 +202,12 @@ export function ProjectsPage() {
       ),
     )
 
+  const pageIndex =
+    Math.min(
+      requestedPageIndex,
+      totalPages - 1,
+    )
+
   const visibleProjects =
     useMemo(() => {
       const start =
@@ -196,30 +242,7 @@ export function ProjectsPage() {
       ],
     )
 
-  function updateFilter<
-    Key extends keyof ProjectFilters,
-  >(
-    key: Key,
-    value:
-      ProjectFilters[Key],
-  ) {
-    setFilters(
-      (current) => ({
-        ...current,
-        [key]: value,
-      }),
-    )
 
-    setPageIndex(0)
-  }
-
-  function clearFilters() {
-    setFilters(
-      DEFAULT_PROJECT_FILTERS,
-    )
-
-    setPageIndex(0)
-  }
 
   if (isLoading) {
     return (
@@ -554,12 +577,11 @@ export function ProjectsPage() {
               pageIndex === 0
             }
             onClick={() =>
-              setPageIndex(
-                (current) =>
-                  Math.max(
-                    0,
-                    current - 1,
-                  ),
+              goToPage(
+                Math.max(
+                  0,
+                  pageIndex - 1,
+                ),
               )
             }
           >
@@ -578,12 +600,11 @@ export function ProjectsPage() {
               totalPages
             }
             onClick={() =>
-              setPageIndex(
-                (current) =>
-                  Math.min(
-                    totalPages - 1,
-                    current + 1,
-                  ),
+              goToPage(
+                Math.min(
+                  totalPages - 1,
+                  pageIndex + 1,
+                ),
               )
             }
           >

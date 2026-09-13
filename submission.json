@@ -7,19 +7,45 @@
         "demo_url": ""
     },
     "answers": {
-        "total_listing_records": 0,
-        "unique_properties": 0,
-        "active_listings": 0,
-        "corrupt_listing_ids": [],
-        "total_monthly_rent": 0,
-        "avg_price_per_sqft_2bhk": 0.0,
+        "total_listing_records": 3500,
+        "unique_properties": 3254,
+        "active_listings": 2792,
+        "corrupt_listing_ids": [
+            "100-6000323",
+            "100-6000338",
+            "100-6001461",
+            "100-6001968",
+            "100-6002071",
+            "DWE-6000010",
+            "DWE-6001015",
+            "DWE-6002663",
+            "DWE-6002846",
+            "MAG-6000453",
+            "MAG-6000527",
+            "MAG-6000631",
+            "MAG-6001135",
+            "MAG-6002834",
+            "SQU-6001477",
+            "SQU-6003044",
+            "ZER-6000468",
+            "ZER-6000669"
+        ],
+        "total_monthly_rent": 4328000,
+        "avg_price_per_sqft_2bhk": 14230.56,
         "costliest_project": {
-            "project_id": "",
-            "price_max_inr": 0
+            "project_id": "P60060",
+            "price_max_inr": 58300000
         },
-        "listings_last_7_days": 0,
-        "fake_listing_ids": [],
-        "projects_with_wrong_listing_count": 0
+        "listings_last_7_days": 129,
+        "fake_listing_ids": [
+            "100-6000578",
+            "100-6000678",
+            "100-6001599",
+            "MAG-6002472",
+            "MAG-6002941",
+            "SQU-6000395"
+        ],
+        "projects_with_wrong_listing_count": 106
     },
     "findings": []
 }

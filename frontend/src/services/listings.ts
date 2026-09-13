@@ -1,4 +1,4 @@
-import { apiRequest } from '../api/client'
+import { protectedRequest } from '../api/protectedClient'
 import { endpoints } from '../api/endpoints'
 import { buildQueryString } from '../api/query'
 import type { ApiCollectionResponse } from '../types/api'
@@ -38,7 +38,7 @@ export async function getListings(
     limit: normalizeLimit(params.limit),
   })
 
-  return apiRequest<ApiCollectionResponse<Listing>>(
+  return protectedRequest<ApiCollectionResponse<Listing>>(
     `${endpoints.listings}${query}`,
   )
 }
@@ -50,7 +50,7 @@ export async function getListingById(id: string) {
     throw new Error('Listing ID is required')
   }
 
-  return apiRequest<Listing>(
+  return protectedRequest<Listing>(
     endpoints.listing(listingId),
   )
 }

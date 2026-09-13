@@ -2293,3 +2293,140 @@ The application should also avoid presenting these bait prices as ordinary
 property sale totals without appropriate data-quality handling.
 
 This is a high-confidence `fraud` finding.
+
+
+
+
+---
+
+## H-016 — Live 2BHK average price per square foot
+
+### Requirement
+
+Q6 asks for the arithmetic mean of the individual price-per-square-foot values
+for qualifying live 2BHK sale listings.
+
+The qualifying population must:
+
+* have `is_live == true`;
+* have `bedroom == 2`;
+* exclude all Q4 corrupt listing records;
+* exclude all Q9 fake enquiry-generation listings.
+
+The price-per-square-foot calculation must use normalized carpet area.
+
+### Important dependency
+
+A previous investigation confirmed that 323 `magichomes` sale listings expose
+both area fields in square metres rather than square feet.
+
+Those records must therefore be converted using:
+
+```text
+sqft = sqm × 10.7639104167
+```
+
+before calculating price per square foot.
+
+### Calculation
+
+For every qualifying listing:
+
+```text
+listing_ppsf = price / normalized_carpet_area_sqft
+```
+
+Then:
+
+```text
+Q6 = arithmetic mean of all listing_ppsf values
+```
+
+This is intentionally different from:
+
+```text
+sum(price) / sum(carpet_area)
+```
+### Evidence
+
+The complete retrievable listing dataset contained:
+
+```text
+all 2BHK records: 1150
+live 2BHK records: 934
+```
+
+The Q6 population was then cleaned using the assignment-required exclusion
+sets:
+
+```text
+live Q4 corrupt records excluded: 6
+live Q9 fake records excluded: 2
+eligible records after exclusions: 926
+```
+
+The two exclusion sets did not overlap within this population because:
+
+```text
+934 - 6 - 2 = 926
+```
+
+Validation of the remaining records found:
+
+```text
+invalid/non-positive prices: 0
+invalid/non-positive carpet areas: 0
+```
+
+Among the qualifying records, 84 `magichomes` listings matched the previously
+confirmed square-metre area pattern and were converted to square feet before
+the PPSF calculation.
+
+The resulting normalized price-per-square-foot distribution was:
+
+```text
+minimum:          4719.90
+5th percentile:   8943.30
+median:           14243.85
+95th percentile:  19702.70
+maximum:          21685.91
+```
+
+The qualifying records were distributed across all listing sources:
+
+```text
+100acres:    197
+dwelling:    188
+magichomes:  190
+squarelane:  180
+zerobroker:  171
+```
+
+For each qualifying listing:
+
+```text
+listing_ppsf = price / normalized_carpet_area_sqft
+```
+
+The final value was computed as the arithmetic mean of the 926 individual PPSF
+values.
+
+### Result
+
+**Confirmed.**
+
+```text
+avg_price_per_sqft_2bhk = 14230.56
+```
+
+This is the arithmetic mean of individual listing-level PPSF values, not
+`sum(price) / sum(area)`.
+
+### Impact
+
+Any UI or analytics feature displaying sale price per square foot must use the
+same area normalization logic to avoid overstating PPSF for affected
+`magichomes` records.
+
+Q4 corrupt listings and Q9 fake listings must also be excluded from this
+specific assignment metric.

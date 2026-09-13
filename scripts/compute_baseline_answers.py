@@ -651,6 +651,66 @@ def compute_q5():
     )
 
 
+def compute_q6():
+    snapshot = load_snapshot(
+        LISTINGS_PATH
+    )
+
+    listings = snapshot["results"]
+
+    corrupt_ids = set(
+        compute_q4()
+    )
+
+    fake_ids = set(
+        compute_q9()
+    )
+
+    ppsf_values = []
+
+    for listing in listings:
+        if listing.get("is_live") is not True:
+            continue
+
+        if listing.get("bedroom") != 2:
+            continue
+
+        listing_id = listing[
+            "listing_id"
+        ]
+
+        if listing_id in corrupt_ids:
+            continue
+
+        if listing_id in fake_ids:
+            continue
+
+        price = listing.get("price")
+
+        carpet_sqft = normalized_area(
+            listing,
+            "carpet_area",
+        )
+
+        if (
+            not is_number(price)
+            or price <= 0
+            or carpet_sqft is None
+            or carpet_sqft <= 0
+        ):
+            continue
+
+        ppsf_values.append(
+            price / carpet_sqft
+        )
+
+    return round(
+        sum(ppsf_values)
+        / len(ppsf_values),
+        2,
+    )
+
+
 # Project price normalization
 
 
@@ -816,6 +876,8 @@ def main():
 
     q5, q5_record_count = compute_q5()
 
+    q6 = compute_q6()
+
     q8 = compute_q8()
 
     q9 = compute_q9()
@@ -877,6 +939,12 @@ def main():
     print(
         f"qualifying rental records: "
         f"{q5_record_count}"
+    )
+
+    print()
+    print("Q6")
+    print(
+        f"avg_price_per_sqft_2bhk: {q6:.2f}"
     )
 
     print()

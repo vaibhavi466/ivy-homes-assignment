@@ -56,7 +56,7 @@ Status meanings:
 | `sort_by=bedroom` works                         | CONFIRMED OK    |
 | `order=asc/desc` works                          | CONFIRMED WRONG |
 | Single-listing path `/v1/listing/{id}` exists   | CONFIRMED WRONG |
-| `/v1/listings/{id}/similar` works as documented | NOT TESTED      |
+| `/v1/listings/{id}/similar` works as documented | CONFIRMED WRONG |
 | Listing areas are sqft                          | CONFIRMED WRONG |
 | Listing timestamps are UTC `Z`                  | CONFIRMED WRONG |
 
@@ -70,7 +70,7 @@ Status meanings:
 | `bhk` filter works                 | NOT TESTED   |
 | `furnishing` filter works          | NOT TESTED   |
 | documented sorting works           | NOT TESTED   |
-| `/v1/rentals/{id}` works           | NOT TESTED   |
+| `/v1/rentals/{id}` works           | CONFIRMED OK |
 | documented rental field names hold | PARTIAL      |
 
 ## Projects
@@ -82,7 +82,7 @@ Status meanings:
 | `locality` filter works                       | NOT TESTED      |
 | `project_status` filter works                 | NOT TESTED      |
 | documented sorting works                      | NOT TESTED      |
-| `/v1/projects/{id}` works                     | NOT TESTED      |
+| `/v1/projects/{id}` works                     | CONFIRMED OK    |
 | `total_listings` agrees with current listings | CONFIRMED WRONG |
 | referenced `project_id` listings filter works | CONFIRMED WRONG |
 
@@ -103,6 +103,9 @@ Status meanings:
 | `/v1/analytics/summary` exists                | NOT TESTED |
 | returned aggregate fields match documentation | NOT TESTED |
 | documented aggregates are numerically correct | NOT TESTED |
+
+## Erros 
+| Unknown record IDs return documented 404 JSON errors | CONFIRMED OK |
 
 ## Data-level discoveries
 

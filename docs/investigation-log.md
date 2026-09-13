@@ -2848,3 +2848,402 @@ Candidate submission finding category:
 ```text
 filters
 ```
+
+
+
+---
+
+## H-019 — Listing filters and sorting
+
+### Documentation claim
+
+`GET /v1/listings` documents the following filters:
+
+```text
+locality
+bhk
+property_type
+min_price
+max_price
+furnishing
+```
+
+and the following sorting contract:
+
+```text
+sort_by = price | carpet_area | posted_at | bedroom
+order   = asc | desc
+```
+
+### Filter verification
+
+Each documented filter was tested using values present in the complete
+3,500-record listing snapshot.
+
+Every returned record satisfied the requested predicate.
+
+Examples:
+
+```text
+locality=sector 65
+returned mismatches: 0
+
+locality=dwarka expressway
+returned mismatches: 0
+
+bhk=3
+returned mismatches: 0
+
+bhk=2
+returned mismatches: 0
+
+property_type=apartment
+returned mismatches: 0
+
+furnishing=fully-furnished
+returned mismatches: 0
+
+min_price=12420000
+returned mismatches: 0
+
+max_price=17700000
+returned mismatches: 0
+```
+
+A combined request was also tested:
+
+```text
+locality=sector 65
+bhk=3
+furnishing=fully-furnished
+```
+
+and every returned record satisfied all three conditions.
+
+Therefore the documented listing filters themselves are working.
+
+### Filtered `total` metadata
+
+The API-reported `total` values did not agree with the complete local snapshot.
+
+For example:
+
+```text
+sector 65
+snapshot matches: 385
+API total:        352
+
+bhk=3
+snapshot matches: 1297
+API total:        1186
+
+apartment
+snapshot matches: 2592
+API total:        2371
+```
+
+This is consistent with the already-confirmed global collection-count defect
+where the unfiltered endpoint reports `total=3201` although 3500 records are
+retrievable.
+
+It is therefore treated as part of the pagination/count discrepancy rather than
+as multiple separate filter findings.
+
+### Sorting verification
+
+#### Price
+
+Ascending price sorting works.
+
+The beginning of the ascending response was:
+
+```text
+-17880000
+-17660000
+-13650000
+-12640000
+-12340000
+-8550000
+5030
+8010
+14620
+17010
+```
+
+However, requesting:
+
+```text
+sort_by=price&order=desc
+```
+
+returned the exact same listing IDs in the exact same order.
+
+Therefore descending order is ignored.
+
+#### Bedroom
+
+Ascending bedroom sorting works.
+
+Both:
+
+```text
+sort_by=bedroom&order=asc
+sort_by=bedroom&order=desc
+```
+
+returned the same listing IDs.
+
+The first page happened to consist entirely of zero-bedroom records, which can
+make a simple monotonicity test incorrectly appear valid for both directions.
+
+Comparing the IDs establishes that descending order is ignored.
+
+#### Carpet area
+
+`sort_by=carpet_area` does not correctly order the returned records.
+
+The ascending response failed monotonicity using both:
+
+1. the raw `carpet_area` values; and
+2. the independently confirmed normalized square-foot areas for affected
+   `magichomes` records.
+
+The descending request returned the same listing IDs as the ascending request.
+
+Therefore this is not explained by the mixed-area-unit issue alone.
+
+#### Posted timestamp
+
+`sort_by=posted_at&order=asc` produced records whose calendar dates were
+non-decreasing, but the complete timestamps were not.
+
+For example, records from the same day appeared in this order:
+
+```text
+2026-01-13T12:10:00
+2026-01-13T12:34:00
+2026-01-13T12:36:00
+2026-01-13T17:55:00
+2026-01-13T04:25:00
+2026-01-13T07:28:00
+...
+```
+
+Therefore the server appears to sort by the date component while ignoring the
+time-of-day component.
+
+The descending request again returned the same listing IDs as ascending.
+
+### Results
+
+Confirmed working:
+
+```text
+locality filter
+bhk filter
+property_type filter
+min_price filter
+max_price filter
+furnishing filter
+price ascending sort
+bedroom ascending sort
+```
+
+Confirmed discrepancies:
+
+```text
+1. `order=desc` is ignored.
+2. `sort_by=carpet_area` does not correctly sort by carpet area.
+3. `sort_by=posted_at` does not sort by the complete timestamp.
+```
+
+### Impact
+
+The frontend must not rely on server-side descending ordering.
+
+For predictable UI behavior, records should be sorted client-side after the
+required records have been retrieved, particularly for carpet area and posting
+time.
+
+The documented business filters can still be used server-side, although the
+reported `total` cannot be trusted for determining pagination completeness.
+
+
+
+---
+
+## H-020 — Detail and related endpoint contract
+
+### Documentation claims
+
+The API reference documents:
+
+```text
+GET /v1/listing/{listing_id}
+GET /v1/listings/{listing_id}/similar
+GET /v1/rentals/{listing_id}
+GET /v1/projects/{project_id}
+```
+
+No plural listing-detail endpoint is documented.
+
+### Listing detail
+
+Three known-valid listing IDs were tested:
+
+```text
+100-6000047
+SQU-6001039
+SQU-6001481
+```
+
+For every valid listing, the documented path:
+
+```text
+/v1/listing/{id}
+```
+
+returned:
+
+```text
+HTTP 404
+{"detail": "Not Found"}
+```
+
+The plural form:
+
+```text
+/v1/listings/{id}
+```
+
+was then tested for the same IDs.
+
+Every request returned `HTTP 200` and the correct requested listing object.
+
+For example:
+
+```text
+/v1/listings/100-6000047
+```
+
+returned:
+
+```text
+listing_id = 100-6000047
+```
+
+Therefore the working listing-detail endpoint is:
+
+```text
+GET /v1/listings/{id}
+```
+
+and it is missing from the documentation.
+
+### Similar listings
+
+The documented endpoint:
+
+```text
+GET /v1/listings/{id}/similar
+```
+
+was tested using the same three known-valid listing IDs.
+
+All three returned:
+
+```text
+HTTP 404
+{"detail": "Not Found"}
+```
+
+Therefore the documented similar-listings endpoint does not exist at that path.
+
+### Rental detail
+
+The documented rental-detail endpoint was tested with:
+
+```text
+R6000001
+R6000660
+R6001320
+```
+
+All returned `HTTP 200` and the correct rental object.
+
+Result:
+
+```text
+GET /v1/rentals/{id}
+```
+
+is confirmed working.
+
+### Project detail
+
+The documented project-detail endpoint was tested with:
+
+```text
+P60001
+P60201
+P60400
+```
+
+All returned `HTTP 200` and the correct project object.
+
+Result:
+
+```text
+GET /v1/projects/{id}
+```
+
+is confirmed working.
+
+### Invalid-ID behavior
+
+Known-invalid IDs were tested against listing, rental and project detail paths.
+
+The valid detail endpoints returned `HTTP 404` with useful JSON error bodies,
+including:
+
+```text
+{"detail": "no such listing in your city"}
+{"detail": "no such rental in your city"}
+{"detail": "no such project in your city"}
+```
+
+This agrees with the documented 404 error contract.
+
+### Results
+
+Confirmed discrepancies:
+
+```text
+1. Documented `/v1/listing/{id}` does not exist.
+2. Undocumented `/v1/listings/{id}` exists and returns the correct listing.
+3. Documented `/v1/listings/{id}/similar` does not exist.
+```
+
+Confirmed working:
+
+```text
+/v1/rentals/{id}
+/v1/projects/{id}
+404 responses for nonexistent records
+```
+
+### Impact
+
+The frontend listing-detail page must use:
+
+```text
+GET /v1/listings/{id}
+```
+
+rather than the documented singular path.
+
+The application must not depend on `/v1/listings/{id}/similar`; if a similar
+listings section is desired, it must be derived client-side from the complete
+listing dataset or omitted.
+
+Rental and project detail pages may safely use their documented endpoints.

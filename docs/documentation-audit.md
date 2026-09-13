@@ -23,10 +23,13 @@ Status meanings:
 
 | Claim                                        | Status          |
 | -------------------------------------------- | --------------- |
+| `listing_id` values are globally unique      | CONFIRMED OK    |
+| `rental_id` values are globally unique       | CONFIRMED OK    |
+| `project_id` values are globally unique      | CONFIRMED OK    |
 | Money is INR everywhere                      | CONFIRMED WRONG |
 | Area is sqft everywhere                      | CONFIRMED WRONG |
 | Timestamps are ISO UTC with `Z` everywhere   | CONFIRMED WRONG |
-| Documented lowercase string conventions hold | NOT TESTED      |
+| Documented lowercase string conventions hold | CONFIRMED OK    |
 
 ## Collection pagination
 
@@ -111,7 +114,7 @@ Status meanings:
 | response contains `by_locality`           | UNTESTABLE — endpoint missing |
 | response contains `by_bhk`                | UNTESTABLE — endpoint missing |
 
-## Erros 
+## Errors 
 | Unknown record IDs return documented 404 JSON errors | CONFIRMED OK |
 
 ## Data-level discoveries

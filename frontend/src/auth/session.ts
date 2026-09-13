@@ -4,14 +4,76 @@ import type {
   AuthUser,
 } from '../types/auth'
 
-const SESSION_STORAGE_KEY = 'ivy.auth.session'
+const SESSION_STORAGE_KEY =
+  'ivy.auth.session'
 
 export const AUTH_SESSION_CHANGE_EVENT =
   'ivy:auth-session-change'
 
 function notifySessionChange() {
   window.dispatchEvent(
-    new Event(AUTH_SESSION_CHANGE_EVENT),
+    new Event(
+      AUTH_SESSION_CHANGE_EVENT,
+    ),
+  )
+}
+
+function isRecord(
+  value: unknown,
+): value is Record<
+  string,
+  unknown
+> {
+  return (
+    typeof value === 'object' &&
+    value !== null
+  )
+}
+
+function isValidSession(
+  value: unknown,
+): value is AuthSession {
+  if (!isRecord(value)) {
+    return false
+  }
+
+  const tokens = value.tokens
+  const user = value.user
+
+  if (
+    !isRecord(tokens) ||
+    !isRecord(user)
+  ) {
+    return false
+  }
+
+  return (
+    typeof tokens.accessToken ===
+      'string' &&
+    tokens.accessToken.length > 0 &&
+
+    typeof tokens.refreshToken ===
+      'string' &&
+    tokens.refreshToken.length > 0 &&
+
+    typeof tokens.tokenType ===
+      'string' &&
+
+    typeof tokens.expiresIn ===
+      'number' &&
+    Number.isFinite(
+      tokens.expiresIn,
+    ) &&
+
+    typeof user.email ===
+      'string' &&
+    user.email.length > 0 &&
+
+    typeof value.expiresAt ===
+      'number' &&
+    Number.isFinite(
+      value.expiresAt,
+    )
   )
 }
 
@@ -22,11 +84,16 @@ export function createSession(
   return {
     tokens,
     user,
-    expiresAt: Date.now() + tokens.expiresIn * 1000,
+
+    expiresAt:
+      Date.now() +
+      tokens.expiresIn * 1000,
   }
 }
 
-export function saveSession(session: AuthSession) {
+export function saveSession(
+  session: AuthSession,
+) {
   localStorage.setItem(
     SESSION_STORAGE_KEY,
     JSON.stringify(session),
@@ -35,17 +102,29 @@ export function saveSession(session: AuthSession) {
   notifySessionChange()
 }
 
-export function loadSession(): AuthSession | null {
-  const rawSession = localStorage.getItem(
-    SESSION_STORAGE_KEY,
-  )
+export function loadSession():
+  AuthSession | null {
+  const rawSession =
+    localStorage.getItem(
+      SESSION_STORAGE_KEY,
+    )
 
   if (!rawSession) {
     return null
   }
 
   try {
-    return JSON.parse(rawSession) as AuthSession
+    const parsed: unknown =
+      JSON.parse(rawSession)
+
+    if (
+      !isValidSession(parsed)
+    ) {
+      clearSession()
+      return null
+    }
+
+    return parsed
   } catch {
     clearSession()
 
@@ -54,7 +133,9 @@ export function loadSession(): AuthSession | null {
 }
 
 export function clearSession() {
-  localStorage.removeItem(SESSION_STORAGE_KEY)
+  localStorage.removeItem(
+    SESSION_STORAGE_KEY,
+  )
 
   notifySessionChange()
 }
@@ -65,6 +146,7 @@ export function isSessionExpired(
 ) {
   return (
     Date.now() >=
-    session.expiresAt - bufferSeconds * 1000
+    session.expiresAt -
+      bufferSeconds * 1000
   )
 }

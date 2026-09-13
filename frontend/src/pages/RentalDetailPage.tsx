@@ -19,6 +19,9 @@ import {
   formatRentalMoney,
   formatRentalPostedAt,
 } from '../utils/rental'
+import {
+  getSafeExternalUrl,
+} from '../utils/url'
 
 interface RentalDetailLocationState {
   from?: string
@@ -170,6 +173,11 @@ export function RentalDetailPage() {
       </section>
     )
   }
+
+  const sourceUrl =
+    getSafeExternalUrl(
+      rental.listing_url,
+    )
 
   return (
     <section className="detail-page">
@@ -353,14 +361,12 @@ export function RentalDetailPage() {
         </section>
       )}
 
-      {rental.listing_url && (
+      {sourceUrl && (
         <a
           className="source-link"
-          href={
-            rental.listing_url
-          }
+          href={sourceUrl}
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
         >
           View original listing ↗
         </a>

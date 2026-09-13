@@ -24,8 +24,18 @@ export function AppShell() {
 
   return (
     <>
+      <a
+        className="skip-link"
+        href="#main-content"
+      >
+        Skip to main content
+      </a>
+
       <header className="app-header">
-        <nav className="app-nav">
+        <nav
+          className="app-nav"
+          aria-label="Primary navigation"
+        >
           <NavLink to="/listings">
             Listings
           </NavLink>
@@ -67,7 +77,10 @@ export function AppShell() {
         </div>
       </header>
 
-      <main>
+      <main
+        id="main-content"
+        tabIndex={-1}
+      >
         <Outlet />
       </main>
     </>

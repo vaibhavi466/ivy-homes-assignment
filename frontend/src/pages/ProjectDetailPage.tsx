@@ -24,6 +24,9 @@ import {
   formatProjectDate,
   formatProjectPriceRange,
 } from '../utils/project'
+import {
+  getSafeExternalUrl,
+} from '../utils/url'
 
 interface ProjectDetailLocationState {
   from?: string
@@ -199,6 +202,11 @@ export function ProjectDetailPage() {
     project.total_listings !==
     verifiedListingCount
 
+  const sourceUrl =
+    getSafeExternalUrl(
+      project.project_url,
+    )
+
   return (
     <section className="detail-page">
       <Link
@@ -370,14 +378,12 @@ export function ProjectDetailPage() {
         </section>
       )}
 
-      {project.project_url && (
+      {sourceUrl && (
         <a
           className="source-link"
-          href={
-            project.project_url
-          }
+          href={sourceUrl}
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
         >
           View project source ↗
         </a>

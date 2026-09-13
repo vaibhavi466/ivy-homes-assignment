@@ -14,6 +14,7 @@ import { ListingDetailPage } from './pages/ListingDetailPage'
 import { ListingsPage } from './pages/ListingsPage'
 import { LoginPage } from './pages/LoginPage'
 import { ProjectsPage } from './pages/ProjectsPage'
+import { RentalDetailPage } from './pages/RentalDetailPage'
 import { RentalsPage } from './pages/RentalsPage'
 import { SavedPage } from './pages/SavedPage'
 
@@ -60,6 +61,11 @@ function App() {
                 <Route
                   path="/rentals"
                   element={<RentalsPage />}
+                />
+
+                <Route
+                  path="/rentals/:id"
+                  element={<RentalDetailPage />}
                 />
 
                 <Route

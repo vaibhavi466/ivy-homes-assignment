@@ -609,3 +609,41 @@ h1 {
     flex-direction: column;
   }
 }
+
+.rental-title {
+  margin: 18px 0 0;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.rental-detail-title {
+  margin: 0 0 24px;
+  font-size: 20px;
+}
+
+.rental-description {
+  margin-top: 24px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+
+.rental-description h2 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.rental-description p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.65;
+}
+
+.source-link {
+  display: inline-block;
+  margin-top: 20px;
+  color: #111827;
+  font-weight: 700;
+  text-decoration: none;
+}

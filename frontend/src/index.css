@@ -150,3 +150,209 @@ h1 {
   color: #991b1b;
   font-size: 14px;
 }
+
+.listings-page {
+  width: min(1400px, 100%);
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+}
+
+.page-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.page-heading h1 {
+  padding: 0;
+  margin: 0 0 8px;
+}
+
+.page-eyebrow {
+  margin: 0 0 8px;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.page-description {
+  margin: 0;
+  color: #6b7280;
+}
+
+.page-status {
+  display: grid;
+  gap: 4px;
+  text-align: right;
+  font-size: 14px;
+}
+
+.page-status span {
+  color: #6b7280;
+}
+
+.listing-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fill,
+      minmax(300px, 1fr));
+  gap: 18px;
+}
+
+.listing-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+
+.listing-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.listing-card-header h2 {
+  margin: 4px 0 0;
+  font-size: 22px;
+}
+
+.listing-source {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+  text-transform: capitalize;
+}
+
+.listing-live-badge {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.listing-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.listing-facts div {
+  min-width: 0;
+}
+
+.listing-facts dt {
+  margin-bottom: 4px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.listing-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.listing-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.listing-card-footer a {
+  color: #111827;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.listing-id {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.state-card {
+  padding: 32px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  text-align: center;
+}
+
+.state-card h2 {
+  margin-top: 0;
+}
+
+.state-card p {
+  color: #6b7280;
+}
+
+.state-card button {
+  padding: 10px 14px;
+}
+
+.error-state {
+  border-color: #fecaca;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 32px;
+}
+
+.pagination button {
+  min-width: 100px;
+  padding: 9px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+@media (max-width: 700px) {
+  .app-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .app-nav {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .page-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .page-status {
+    text-align: left;
+  }
+
+  .listing-facts {
+    grid-template-columns: 1fr;
+  }
+}

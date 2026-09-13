@@ -5,6 +5,14 @@ export interface Listing {
 
   price: number
 
+  locality: string | null
+
+  property_type: string | null
+
+  bedroom: number | null
+
+  furnishing: string | null
+
   carpet_area: number | null
 
   super_built_up_area: number | null

@@ -6,6 +6,8 @@ import type { Listing } from '../types/listing'
 
 const MAX_LISTING_PAGE_SIZE = 50
 
+let allListingsPromise: Promise<Listing[]> | null = null
+
 export interface ListingPageParams {
   offset?: number
   limit?: number
@@ -88,6 +90,20 @@ export async function getAllListings() {
   }
 
   return listings
+}
+
+export function getAllListingsCached() {
+  if (!allListingsPromise) {
+    allListingsPromise = getAllListings().catch(
+      (error: unknown) => {
+        allListingsPromise = null
+
+        throw error
+      },
+    )
+  }
+
+  return allListingsPromise
 }
 
 export function getLiveListings(

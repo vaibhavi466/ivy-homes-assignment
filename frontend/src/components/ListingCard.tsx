@@ -2,88 +2,105 @@ import { Link } from 'react-router-dom'
 
 import type { Listing } from '../types/listing'
 import {
-    formatArea,
-    formatPostedAt,
-    formatPrice,
-    getNormalizedCarpetArea,
-    getNormalizedSuperBuiltUpArea,
+  formatArea,
+  formatPrice,
+  getNormalizedCarpetArea,
+  getNormalizedSuperBuiltUpArea,
 } from '../utils/listing'
 
 interface ListingCardProps {
-    listing: Listing
+  listing: Listing
 }
 
 export function ListingCard({
-    listing,
+  listing,
 }: ListingCardProps) {
-    const carpetArea =
-        getNormalizedCarpetArea(listing)
+  const carpetArea =
+    getNormalizedCarpetArea(listing)
 
-    const superBuiltUpArea =
-        getNormalizedSuperBuiltUpArea(listing)
+  const superBuiltUpArea =
+    getNormalizedSuperBuiltUpArea(listing)
 
-    return (
-        <article className="listing-card">
-            <div className="listing-card-header">
-                <div>
-                    <p className="listing-source">
-                        {listing.website}
-                    </p>
+  return (
+    <article className="listing-card">
+      <div className="listing-card-header">
+        <div>
+          <p className="listing-source">
+            {listing.website}
+          </p>
 
-                    <h2>
-                        {formatPrice(listing.price)}
-                    </h2>
-                </div>
+          <h2>
+            {formatPrice(listing.price)}
+          </h2>
+        </div>
 
-                <span className="listing-live-badge">
-                    Active
-                </span>
-            </div>
+        <span className="listing-live-badge">
+          Active
+        </span>
+      </div>
 
-            <dl className="listing-facts">
-                <div>
-                    <dt>Carpet area</dt>
-                    <dd>{formatArea(carpetArea)}</dd>
-                </div>
+      <dl className="listing-facts">
+        <div>
+          <dt>Locality</dt>
+          <dd>
+            {listing.locality ??
+              'Not specified'}
+          </dd>
+        </div>
 
-                <div>
-                    <dt>Built-up area</dt>
-                    <dd>
-                        {formatArea(superBuiltUpArea)}
-                    </dd>
-                </div>
+        <div>
+          <dt>BHK</dt>
+          <dd>
+            {listing.bedroom === null
+              ? 'Not specified'
+              : `${listing.bedroom} BHK`}
+          </dd>
+        </div>
 
-                <div>
-                    <dt>Project</dt>
-                    <dd>
-                        {listing.project_id ??
-                            'Not specified'}
-                    </dd>
-                </div>
+        <div>
+          <dt>Property type</dt>
+          <dd>
+            {listing.property_type ??
+              'Not specified'}
+          </dd>
+        </div>
 
-                <div>
-                    <dt>Posted</dt>
-                    <dd>
-                        {formatPostedAt(
-                            listing.posted_at,
-                        )}
-                    </dd>
-                </div>
-            </dl>
+        <div>
+          <dt>Furnishing</dt>
+          <dd>
+            {listing.furnishing ??
+              'Not specified'}
+          </dd>
+        </div>
 
-            <div className="listing-card-footer">
-                <span className="listing-id">
-                    {listing.listing_id}
-                </span>
+        <div>
+          <dt>Carpet area</dt>
+          <dd>{formatArea(carpetArea)}</dd>
+        </div>
 
-                <Link
-                    to={`/listings/${encodeURIComponent(
-                        listing.listing_id,
-                    )}`}
-                >
-                    View details
-                </Link>
-            </div>
-        </article>
-    )
+        <div>
+          <dt>Built-up area</dt>
+          <dd>
+            {formatArea(
+              superBuiltUpArea,
+            )}
+          </dd>
+        </div>
+      </dl>
+
+      <div className="listing-card-footer">
+        <span className="listing-id">
+          {listing.listing_id}
+        </span>
+
+        <Link
+          to={`/listings/${encodeURIComponent(
+            listing.listing_id,
+          )}`}
+        >
+          View details
+        </Link>
+      </div>
+    </article>
+  )
 }

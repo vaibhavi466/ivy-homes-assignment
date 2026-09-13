@@ -3555,3 +3555,331 @@ The frontend may use server-side rental filters, but must not rely on the
 reported `total` to determine when all records have been retrieved.
 
 Any user-facing descending sort should be performed client-side.
+
+
+---
+
+## H-022 — Project collection contract
+
+### Documentation claims
+
+`GET /v1/projects` documents the following filters:
+
+```text
+locality
+project_status
+```
+
+and the following sorting contract:
+
+```text
+sort_by =
+    price_min
+    price_max
+    launch_date
+    total_units
+
+order =
+    asc
+    desc
+```
+
+The documentation also states that project areas are square feet and project
+dates use `YYYY-MM-DD`.
+
+### Field contract
+
+The complete project snapshot contained:
+
+```text
+400 projects
+```
+
+Every documented project field was present in every record.
+
+There were:
+
+```text
+0 documented fields absent
+0 records missing a documented field
+0 undocumented additional fields
+```
+
+### Lowercase string contract
+
+The documented lowercase convention was checked for:
+
+```text
+locality
+project_status
+```
+
+Violations:
+
+```text
+locality:       0
+project_status: 0
+```
+
+### Date contract
+
+Both documented project date fields were checked:
+
+```text
+launch_date
+possession_date
+```
+
+Results:
+
+```text
+launch_date:
+missing: 0
+invalid YYYY-MM-DD: 0
+
+possession_date:
+missing: 0
+invalid YYYY-MM-DD: 0
+```
+
+Therefore project dates comply with the documented date format.
+
+### Area contract
+
+All project area ranges were valid positive values.
+
+```text
+invalid/non-positive min_area_sqft: 0
+invalid/non-positive max_area_sqft: 0
+min_area_sqft > max_area_sqft:      0
+```
+
+Observed ranges:
+
+```text
+min_area_sqft: 600 to 1400
+max_area_sqft: 1027 to 3459
+```
+
+There is no evidence that project area fields require any unit conversion.
+
+### Project price-unit confirmation
+
+The raw project price values frequently appear inverted:
+
+```text
+raw price_min > raw price_max:
+184 projects
+```
+
+After applying the independently established mixed-unit normalization:
+
+```text
+value < 10
+→ crore
+→ value × 10,000,000 INR
+
+value >= 10
+→ lakh
+→ value × 100,000 INR
+```
+
+the result becomes:
+
+```text
+normalized price_min > normalized price_max:
+0 projects
+```
+
+This further confirms the previously discovered project price-unit discrepancy.
+
+### Filters
+
+The documented project filters were tested against values present in the
+complete snapshot.
+
+Examples:
+
+```text
+locality=dwarka expressway
+local snapshot matches: 48
+returned mismatches: 0
+
+locality=golf course road
+local snapshot matches: 47
+returned mismatches: 0
+
+project_status=under construction
+local snapshot matches: 137
+returned mismatches: 0
+
+project_status=new launch
+local snapshot matches: 136
+returned mismatches: 0
+```
+
+A combined `locality + project_status` filter was also tested and returned only
+matching records.
+
+Therefore the project filters themselves work correctly.
+
+### Incorrect filtered totals
+
+The API-reported `total` values were consistently lower than the complete
+snapshot counts.
+
+Examples:
+
+```text
+dwarka expressway
+actual: 48
+reported total: 44
+
+under construction
+actual: 137
+reported total: 125
+```
+
+This is consistent with the already-confirmed unfiltered project count issue:
+
+```text
+reported total:      366
+retrievable records: 400
+```
+
+Therefore this is treated as part of the existing pagination/count discrepancy,
+not as a separate filter defect.
+
+### Sorting — ascending
+
+All four documented ascending sorts behaved correctly.
+
+#### `price_min`
+
+Ascending ordering was valid after normalization.
+
+The first values corresponded to:
+
+```text
+41.5 → ₹4,150,000
+44.4 → ₹4,440,000
+46.1 → ₹4,610,000
+48.7 → ₹4,870,000
+```
+
+#### `price_max`
+
+The raw values did not appear numerically sorted:
+
+```text
+89.1
+89.4
+98.9
+1.0
+1.01
+1.11
+...
+```
+
+but after applying the verified lakh/crore normalization they became:
+
+```text
+₹8,910,000
+₹8,940,000
+₹9,890,000
+₹10,000,000
+₹10,100,000
+₹11,100,000
+...
+```
+
+which is correctly ascending.
+
+This is strong evidence that the server internally understands the mixed project
+price representation when sorting.
+
+#### `launch_date`
+
+Ascending launch dates were correctly ordered.
+
+#### `total_units`
+
+Ascending total-unit counts were correctly ordered.
+
+### Descending order
+
+For every tested sort field:
+
+```text
+price_min
+price_max
+launch_date
+total_units
+```
+
+the requests:
+
+```text
+order=asc
+order=desc
+```
+
+returned the exact same project IDs in the exact same order.
+
+Examples:
+
+```text
+price_min ASC and DESC identical IDs: true
+price_max ASC and DESC identical IDs: true
+launch_date ASC and DESC identical IDs: true
+total_units ASC and DESC identical IDs: true
+```
+
+Therefore `order=desc` is ignored.
+
+### Results
+
+Confirmed working:
+
+```text
+project object field contract
+locality lowercase convention
+project_status lowercase convention
+launch_date format
+possession_date format
+project square-foot area fields
+locality filter
+project_status filter
+combined filters
+price_min ascending sort
+price_max ascending sort after unit normalization
+launch_date ascending sort
+total_units ascending sort
+project detail endpoint
+```
+
+Previously confirmed discrepancies reinforced here:
+
+```text
+project price unit representation
+incorrect collection total metadata
+incorrect project total_listings values
+```
+
+New confirmed discrepancy:
+
+```text
+order=desc is ignored on /v1/projects
+```
+
+### Frontend impact
+
+Project prices must be normalized into INR before display.
+
+The server-side filters and ascending sorting may be used.
+
+The frontend must not rely on `order=desc`; descending user-facing sorting
+should be performed client-side.
+
+The API-reported `total` must not be used to determine whether all project
+records have been retrieved.

@@ -10,7 +10,10 @@ import {
 import { getApiErrorMessage } from '../api/errors'
 import { DetailField } from '../components/DetailField'
 import { useSavedListings } from '../saved/SavedListingsContext'
-import { getListingById } from '../services/listings'
+import {
+  getAllListingsCached,
+  getListingById,
+} from '../services/listings'
 import type { Listing } from '../types/listing'
 import {
   formatArea,
@@ -19,6 +22,33 @@ import {
   getNormalizedCarpetArea,
   getNormalizedSuperBuiltUpArea,
 } from '../utils/listing'
+import {
+  getMarketContext,
+  type MarketContext,
+} from '../utils/marketContext'
+
+function formatPricePerSqFt(
+  value: number,
+) {
+  return `${Math.round(
+    value,
+  ).toLocaleString('en-IN')} / sq ft`
+}
+
+function formatMarketDifference(
+  value: number,
+) {
+  const absolute =
+    Math.abs(value).toFixed(1)
+
+  if (Math.abs(value) < 0.05) {
+    return 'In line with peer median'
+  }
+
+  return value < 0
+    ? `${absolute}% below peer median`
+    : `${absolute}% above peer median`
+}
 
 export function ListingDetailPage() {
   const { id } = useParams()
@@ -30,6 +60,14 @@ export function ListingDetailPage() {
 
   const [listing, setListing] =
     useState<Listing | null>(null)
+
+  const [marketContext, setMarketContext] =
+    useState<MarketContext | null>(null)
+
+  const [
+    isMarketContextLoading,
+    setIsMarketContextLoading,
+  ] = useState(false)
 
   const [error, setError] =
     useState<string | null>(null)
@@ -83,6 +121,48 @@ export function ListingDetailPage() {
       cancelled = true
     }
   }, [id, retryKey])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadMarketContext() {
+      if (!listing) {
+        setMarketContext(null)
+        return
+      }
+
+      setIsMarketContextLoading(true)
+      setMarketContext(null)
+
+      try {
+        const allListings =
+          await getAllListingsCached()
+
+        if (!cancelled) {
+          setMarketContext(
+            getMarketContext(
+              listing,
+              allListings,
+            ),
+          )
+        }
+      } catch {
+        if (!cancelled) {
+          setMarketContext(null)
+        }
+      } finally {
+        if (!cancelled) {
+          setIsMarketContextLoading(false)
+        }
+      }
+    }
+
+    void loadMarketContext()
+
+    return () => {
+      cancelled = true
+    }
+  }, [listing])
 
   if (isLoading) {
     return (
@@ -263,6 +343,93 @@ export function ListingDetailPage() {
           }
         />
       </dl>
+
+      <section
+        className="market-context"
+        aria-labelledby="market-context-title"
+      >
+        <div>
+          <p className="page-eyebrow">
+            Market intelligence
+          </p>
+
+          <h2 id="market-context-title">
+            How this listing compares
+          </h2>
+
+          <p>
+            Compared with active{' '}
+            {listing.bedroom !== null
+              ? `${listing.bedroom} BHK `
+              : ''}
+            listings in{' '}
+            {listing.locality ??
+              'the same locality'}{' '}
+            using normalized carpet area.
+          </p>
+        </div>
+
+        {isMarketContextLoading && (
+          <div
+            className="state-card"
+            role="status"
+          >
+            Calculating market context…
+          </div>
+        )}
+
+        {!isMarketContextLoading &&
+          marketContext && (
+            <dl className="detail-grid">
+              <DetailField
+                label="Price per sq ft"
+                value={formatPricePerSqFt(
+                  marketContext.pricePerSqFt,
+                )}
+              />
+
+              <DetailField
+                label="Peer median"
+                value={formatPricePerSqFt(
+                  marketContext
+                    .medianPricePerSqFt,
+                )}
+              />
+
+              <DetailField
+                label="Market position"
+                value={formatMarketDifference(
+                  marketContext
+                    .differenceFromMedianPercent,
+                )}
+              />
+
+              <DetailField
+                label="Comparable listings"
+                value={marketContext.comparableCount.toLocaleString(
+                  'en-IN',
+                )}
+              />
+
+              <DetailField
+                label="Relative position"
+                value={`Lower ₹/sq ft than ${Math.round(
+                  marketContext
+                    .lowerThanPeersPercent,
+                )}% of comparable listings`}
+              />
+            </dl>
+          )}
+
+        {!isMarketContextLoading &&
+          !marketContext && (
+            <p>
+              Not enough comparable active
+              listings are available to calculate
+              reliable market context.
+            </p>
+          )}
+      </section>
     </section>
   )
 }

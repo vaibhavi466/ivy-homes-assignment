@@ -1,0 +1,17 @@
+/* Analytics and integrity presentation only. */
+.analytics-provenance{border-color:rgba(54,104,145,.16);border-radius:18px;background:linear-gradient(145deg,#f5f9ff,#eef6ff);color:#31547a;box-shadow:var(--shadow-sm)}
+.analytics-summary-grid{gap:18px}
+.analytics-summary-card,.analytics-panel,.integrity-section,.integrity-impact{border-color:rgba(25,76,61,.1);border-radius:20px;background:rgba(255,255,255,.88);box-shadow:var(--shadow-sm)}
+.analytics-summary-card{position:relative;overflow:hidden;padding:22px}
+.analytics-summary-card::after{content:"";position:absolute;right:-26px;bottom:-30px;width:88px;height:88px;border-radius:50%;background:radial-gradient(circle,rgba(208,181,115,.18),transparent 68%)}
+.analytics-summary-card>span,.analytics-panel-heading>span,.analytics-row-heading span,.analytics-row-metrics,.analytics-quality-panel span,.integrity-card>span,.integrity-card>small,.integrity-consistency p,.integrity-impact-grid span,.integrity-impact-grid p{color:#74827d}
+.analytics-summary-card>strong{color:#21483b;font-size:27px}
+.analytics-panel{padding:24px}
+.analytics-bar-track,.integrity-progress{background:#e8eeea}
+.analytics-bar,.integrity-progress-value{background:linear-gradient(90deg,#1b6b55,#4f8e77 70%,#c8a85f)}
+.analytics-quality-panel{border-color:rgba(25,76,61,.1);border-radius:18px;background:rgba(25,76,61,.09);box-shadow:var(--shadow-sm)}
+.analytics-quality-panel div{background:rgba(255,255,255,.92)}
+.analytics-quality-panel strong,.integrity-card>strong,.integrity-consistency strong,.integrity-impact-grid strong{color:#234b3e}
+.integrity-card,.integrity-consistency,.integrity-impact-grid article{border-color:rgba(24,76,61,.09);border-radius:15px;background:linear-gradient(145deg,#fbfcfa,#f4f7f4)}
+.integrity-card,.integrity-impact-grid article{transition:transform var(--transition-base),box-shadow var(--transition-base)}
+.integrity-card:hover,.integrity-impact-grid article:hover{box-shadow:var(--shadow-sm);transform:translateY(-2px)}

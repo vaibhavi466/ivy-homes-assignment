@@ -1,0 +1,20 @@
+/* Property card presentation only. */
+.listing-grid{gap:20px}
+.listing-card{position:relative;min-height:320px;padding:22px;overflow:hidden;border:1px solid rgba(24,74,59,.105);border-radius:20px;background:radial-gradient(circle at 100% 0%,rgba(213,190,132,.09),transparent 11rem),rgba(255,255,255,.9);box-shadow:var(--shadow-sm);transform:translateZ(0)}
+.listing-card::before{content:"";position:absolute;inset:0 0 auto;height:3px;opacity:.78;background:linear-gradient(90deg,#1b6a55 0%,#8eb2a0 54%,#d3b56c 100%)}
+.listing-card:hover{border-color:rgba(24,84,65,.18);background:radial-gradient(circle at 100% 0%,rgba(213,190,132,.13),transparent 12rem),#fff;box-shadow:var(--shadow-md);transform:translateY(-4px)}
+.listing-card-header h2{color:#183f34;font-size:21px;line-height:1.18}
+.listing-source{color:#81908a;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.listing-live-badge{border:1px solid rgba(18,117,70,.1);background:linear-gradient(145deg,#effaf4,#e2f4ea);color:#17633f;box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
+.project-status-badge{border:1px solid rgba(77,88,148,.1);background:linear-gradient(145deg,#f2f3fc,#e8ebfa);color:#49548a}
+.listing-facts{gap:18px;margin:26px 0}
+.listing-facts div{padding:12px 13px;border:1px solid rgba(26,78,61,.065);border-radius:12px;background:rgba(247,249,247,.72)}
+.listing-facts dt{color:#8b9692;font-size:10.5px;font-weight:700;letter-spacing:.035em;text-transform:uppercase}
+.listing-facts dd{color:#29483e;font-size:13.5px}
+.listing-card-footer{border-top-color:rgba(25,73,58,.08)}
+.listing-card-footer a,.source-link,.back-link{color:#175b49}
+.listing-card-footer a:hover,.source-link:hover,.back-link:hover{color:#0e4436}
+.save-button{border-color:rgba(25,75,60,.13);border-radius:10px;background:rgba(255,255,255,.82);color:#536a61}
+.save-button:hover:not(.saved){border-color:rgba(25,75,60,.24);color:#175b49;box-shadow:var(--shadow-xs)}
+.save-button.saved{border-color:#15533f;background:linear-gradient(135deg,#1c6953,#10483a);box-shadow:0 6px 16px rgba(22,91,73,.16)}
+.project-price,.project-detail-price{color:#174f3f}.rental-title{color:#405b51}

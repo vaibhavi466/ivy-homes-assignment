@@ -8,10 +8,17 @@ import { getApiErrorMessage } from '../api/errors'
 import {
   getAllListingsCached,
 } from '../services/listings'
+import {
+  getAllProjectsCached,
+} from '../services/projects'
 import type { Listing } from '../types/listing'
+import type { Project } from '../types/project'
 import {
   computeListingAnalytics,
 } from '../utils/analytics'
+import {
+  computeDataIntegrity,
+} from '../utils/dataIntegrity'
 import {
   formatPrice,
 } from '../utils/listing'
@@ -118,6 +125,9 @@ export function InsightsPage() {
   const [listings, setListings] =
     useState<Listing[]>([])
 
+  const [projects, setProjects] =
+    useState<Project[]>([])
+
   const [error, setError] =
     useState<string | null>(
       null,
@@ -137,12 +147,21 @@ export function InsightsPage() {
       setError(null)
 
       try {
-        const response =
-          await getAllListingsCached()
+        const [
+          listingResponse,
+          projectResponse,
+        ] = await Promise.all([
+          getAllListingsCached(),
+          getAllProjectsCached(),
+        ])
 
         if (!cancelled) {
           setListings(
-            response,
+            listingResponse,
+          )
+
+          setProjects(
+            projectResponse,
           )
         }
       } catch (
@@ -176,6 +195,16 @@ export function InsightsPage() {
           listings,
         ),
       [listings],
+    )
+
+  const integrity =
+    useMemo(
+      () =>
+        computeDataIntegrity(
+          listings,
+          projects,
+        ),
+      [listings, projects],
     )
 
   const topLocalities =
@@ -348,6 +377,270 @@ export function InsightsPage() {
           </small>
         </article>
       </div>
+
+      <section className="integrity-section">
+        <div className="analytics-panel-heading">
+          <div>
+            <p className="page-eyebrow">
+              Data integrity
+            </p>
+
+            <h2>
+              What the API data actually contains
+            </h2>
+          </div>
+
+          <span>
+            Verified from complete retrievable
+            datasets
+          </span>
+        </div>
+
+        <p className="integrity-description">
+          These observations are computed from
+          the complete listings and projects
+          collections rather than trusting the
+          documented API assumptions.
+        </p>
+
+        <div className="integrity-grid">
+          <article className="integrity-card">
+            <span>
+              Retrievable listings
+            </span>
+
+            <strong>
+              {integrity.totalListingRecords.toLocaleString(
+                'en-IN',
+              )}
+            </strong>
+
+            <small>
+              Complete listing collection
+            </small>
+          </article>
+
+          <article className="integrity-card">
+            <span>
+              Inactive records returned
+            </span>
+
+            <strong>
+              {integrity.inactiveListingRecords.toLocaleString(
+                'en-IN',
+              )}
+            </strong>
+
+            <small>
+              Despite active-only documentation
+            </small>
+          </article>
+
+          <article className="integrity-card">
+            <span>
+              Area-normalized records
+            </span>
+
+            <strong>
+              {integrity.normalizedAreaRecords.toLocaleString(
+                'en-IN',
+              )}
+            </strong>
+
+            <small>
+              Source-specific unit correction
+            </small>
+          </article>
+
+          <article className="integrity-card">
+            <span>
+              Corrupt records
+            </span>
+
+            <strong>
+              {integrity.corruptListingRecords.toLocaleString(
+                'en-IN',
+              )}
+            </strong>
+
+            <small>
+              Impossible property data
+            </small>
+          </article>
+
+          <article className="integrity-card">
+            <span>
+              Non-genuine records
+            </span>
+
+            <strong>
+              {integrity.fakeListingRecords.toLocaleString(
+                'en-IN',
+              )}
+            </strong>
+
+            <small>
+              Identified during dataset audit
+            </small>
+          </article>
+
+          <article className="integrity-card">
+            <span>
+              Project count mismatches
+            </span>
+
+            <strong>
+              {integrity.projectCountMismatches.toLocaleString(
+                'en-IN',
+              )}{' '}
+              /{' '}
+              {integrity.totalProjects.toLocaleString(
+                'en-IN',
+              )}
+            </strong>
+
+            <small>
+              Reported vs verified live listings
+            </small>
+          </article>
+        </div>
+
+        <div className="integrity-consistency">
+          <div>
+            <span>
+              Project metadata consistency
+            </span>
+
+            <strong>
+              {integrity.projectCountConsistencyPercent.toFixed(
+                1,
+              )}
+              %
+            </strong>
+          </div>
+
+          <div
+            className="integrity-progress"
+            aria-label={`${integrity.projectCountConsistencyPercent.toFixed(
+              1,
+            )}% of project listing counts match the verified live-listing dataset`}
+          >
+            <div
+              className="integrity-progress-value"
+              style={{
+                width: `${Math.min(
+                  100,
+                  Math.max(
+                    0,
+                    integrity.projectCountConsistencyPercent,
+                  ),
+                )}%`,
+              }}
+            />
+          </div>
+
+          <p>
+            {integrity.projectCountMatches.toLocaleString(
+              'en-IN',
+            )}{' '}
+            project records agree with the
+            complete live-listing dataset;{' '}
+            {integrity.projectCountMismatches.toLocaleString(
+              'en-IN',
+            )}{' '}
+            do not.
+          </p>
+        </div>
+      </section>
+
+      <section className="integrity-impact">
+        <div className="analytics-panel-heading">
+          <div>
+            <p className="page-eyebrow">
+              Product impact
+            </p>
+
+            <h2>
+              How these findings change the app
+            </h2>
+          </div>
+
+          <span>
+            Verified observations applied at runtime
+          </span>
+        </div>
+
+        <div className="integrity-impact-grid">
+          <article>
+            <strong>
+              {integrity.inactiveListingRecords.toLocaleString(
+                'en-IN',
+              )}
+            </strong>
+
+            <span>
+              inactive records
+            </span>
+
+            <p>
+              Excluded from market aggregates and
+              treated separately from currently live
+              inventory.
+            </p>
+          </article>
+
+          <article>
+            <strong>
+              {integrity.normalizedAreaRecords.toLocaleString(
+                'en-IN',
+              )}
+            </strong>
+
+            <span>
+              normalized-area records
+            </span>
+
+            <p>
+              Converted before area display and
+              price-per-square-foot calculations.
+            </p>
+          </article>
+
+          <article>
+            <strong>
+              {integrity.knownUnreliableRecords.toLocaleString(
+                'en-IN',
+              )}
+            </strong>
+
+            <span>
+              unreliable records
+            </span>
+
+            <p>
+              Flagged in listing confidence checks
+              and withheld from market comparisons.
+            </p>
+          </article>
+
+          <article>
+            <strong>
+              {integrity.projectCountMismatches.toLocaleString(
+                'en-IN',
+              )}
+            </strong>
+
+            <span>
+              project metadata mismatches
+            </span>
+
+            <p>
+              Project pages compare reported counts
+              with verified live-listing counts.
+            </p>
+          </article>
+        </div>
+      </section>
 
       <section className="analytics-panel">
         <div className="analytics-panel-heading">

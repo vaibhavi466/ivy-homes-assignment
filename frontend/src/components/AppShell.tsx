@@ -12,6 +12,10 @@ export function AppShell() {
   const { savedCount } = useSavedListings()
   const navigate = useNavigate()
 
+  const userEmail = session?.user.email ?? ''
+  const userInitial =
+    userEmail.charAt(0).toUpperCase() || 'U'
+
   async function handleLogout() {
     try {
       await logout()
@@ -32,48 +36,84 @@ export function AppShell() {
       </a>
 
       <header className="app-header">
-        <nav
-          className="app-nav"
-          aria-label="Primary navigation"
-        >
-          <NavLink to="/listings">
-            Listings
-          </NavLink>
-
-          <NavLink to="/saved">
-            Saved
-
-            {savedCount > 0 && (
-              <span className="nav-count">
-                {savedCount}
-              </span>
-            )}
-          </NavLink>
-
-          <NavLink to="/rentals">
-            Rentals
-          </NavLink>
-
-          <NavLink to="/projects">
-            Projects
-          </NavLink>
-
-          <NavLink to="/insights">
-            Insights
-          </NavLink>
-        </nav>
-
-        <div className="app-account">
-          <span>
-            {session?.user.email}
-          </span>
-
-          <button
-            type="button"
-            onClick={handleLogout}
+        <div className="app-header-inner">
+          <NavLink
+            className="app-brand"
+            to="/listings"
+            aria-label="Ivy Homes property intelligence"
           >
-            Log out
-          </button>
+            <span
+              className="app-brand-mark"
+              aria-hidden="true"
+            >
+              I
+            </span>
+
+            <span className="app-brand-copy">
+              <strong>Ivy Homes</strong>
+              <span>Property Intelligence</span>
+            </span>
+          </NavLink>
+
+          <nav
+            className="app-nav"
+            aria-label="Primary navigation"
+          >
+            <NavLink to="/listings">
+              Listings
+            </NavLink>
+
+            <NavLink to="/rentals">
+              Rentals
+            </NavLink>
+
+            <NavLink to="/projects">
+              Projects
+            </NavLink>
+
+            <NavLink to="/saved">
+              Saved
+
+              {savedCount > 0 && (
+                <span className="nav-count">
+                  {savedCount}
+                </span>
+              )}
+            </NavLink>
+
+            <NavLink to="/insights">
+              Insights
+            </NavLink>
+          </nav>
+
+          <div className="app-account">
+            <div className="account-identity">
+              <span
+                className="account-avatar"
+                aria-hidden="true"
+              >
+                {userInitial}
+              </span>
+
+              <span className="account-copy">
+                <span className="account-label">
+                  Signed in
+                </span>
+
+                <span className="account-email">
+                  {userEmail}
+                </span>
+              </span>
+            </div>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={handleLogout}
+            >
+              Log out
+            </button>
+          </div>
         </div>
       </header>
 

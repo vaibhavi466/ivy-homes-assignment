@@ -2,8 +2,33 @@ import type { Listing } from '../types/listing'
 
 const SQ_METRES_TO_SQ_FEET = 10.7639
 
-function isMagichomes(listing: Listing) {
-    return listing.website.toLowerCase() === 'magichomes'
+function isMagichomes(
+  listing: Listing,
+) {
+  return (
+    listing.website.toLowerCase() ===
+    'magichomes'
+  )
+}
+
+export function isCarpetAreaNormalized(
+  listing: Listing,
+) {
+  return (
+    listing.carpet_area !== null &&
+    isMagichomes(listing) &&
+    listing.carpet_area < 300
+  )
+}
+
+export function isSuperBuiltUpAreaNormalized(
+  listing: Listing,
+) {
+  return (
+    listing.super_built_up_area !== null &&
+    isMagichomes(listing) &&
+    listing.super_built_up_area < 400
+  )
 }
 
 export function getNormalizedCarpetArea(
@@ -15,10 +40,7 @@ export function getNormalizedCarpetArea(
         return null
     }
 
-    if (
-        isMagichomes(listing) &&
-        area < 300
-    ) {
+    if (isCarpetAreaNormalized(listing)) {
         return area * SQ_METRES_TO_SQ_FEET
     }
 
@@ -35,8 +57,7 @@ export function getNormalizedSuperBuiltUpArea(
     }
 
     if (
-        isMagichomes(listing) &&
-        area < 400
+      isSuperBuiltUpAreaNormalized(listing)
     ) {
         return area * SQ_METRES_TO_SQ_FEET
     }

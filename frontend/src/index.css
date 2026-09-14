@@ -955,3 +955,145 @@ button:not(:disabled) {
   padding: 0;
   margin: 0 0 12px;
 }
+
+.confidence-panel,
+.market-context {
+  margin-top: 32px;
+}
+
+.confidence-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.confidence-header h2,
+.market-context h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+.confidence-description,
+.market-context > div > p:last-child {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.confidence-summary {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.confidence-summary.verified {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.confidence-summary.warning {
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.confidence-list {
+  display: grid;
+  gap: 12px;
+}
+
+.confidence-item {
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.confidence-item-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.confidence-indicator {
+  display: grid;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.confidence-verified .confidence-indicator {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.confidence-normalized .confidence-indicator {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.confidence-warning .confidence-indicator {
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.confidence-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.confidence-title-row h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.confidence-label {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.confidence-item p {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.market-context {
+  padding-top: 4px;
+}
+
+.market-context > .detail-grid {
+  margin-top: 18px;
+}
+
+.market-context-unavailable {
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #6b7280;
+  line-height: 1.55;
+}
+
+@media (max-width: 700px) {
+  .confidence-header {
+    flex-direction: column;
+  }
+}

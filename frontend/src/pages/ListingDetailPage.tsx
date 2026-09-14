@@ -9,6 +9,7 @@ import {
 
 import { getApiErrorMessage } from '../api/errors'
 import { DetailField } from '../components/DetailField'
+import { ListingConfidencePanel } from '../components/ListingConfidencePanel'
 import { useSavedListings } from '../saved/SavedListingsContext'
 import {
   getAllListingsCached,
@@ -22,6 +23,7 @@ import {
   getNormalizedCarpetArea,
   getNormalizedSuperBuiltUpArea,
 } from '../utils/listing'
+import { isKnownUnreliableListing } from '../utils/listingQuality'
 import {
   getMarketContext,
   type MarketContext,
@@ -228,6 +230,11 @@ export function ListingDetailPage() {
       listing,
     )
 
+  const isUnreliableListing =
+    isKnownUnreliableListing(
+      listing.listing_id,
+    )
+
   return (
     <section className="detail-page">
       <Link
@@ -344,6 +351,10 @@ export function ListingDetailPage() {
         />
       </dl>
 
+      <ListingConfidencePanel
+        listing={listing}
+      />
+
       <section
         className="market-context"
         aria-labelledby="market-context-title"
@@ -423,10 +434,10 @@ export function ListingDetailPage() {
 
         {!isMarketContextLoading &&
           !marketContext && (
-            <p>
-              Not enough comparable active
-              listings are available to calculate
-              reliable market context.
+            <p className="market-context-unavailable">
+              {isUnreliableListing
+                ? 'Market comparison is withheld because this listing was flagged during the verified data-quality audit.'
+                : 'Not enough comparable active listings are available to calculate reliable market context.'}
             </p>
           )}
       </section>

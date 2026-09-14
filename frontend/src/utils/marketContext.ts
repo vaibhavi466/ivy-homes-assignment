@@ -79,11 +79,19 @@ function isComparableListing(
 }
 
 export function getMarketContext(
-    listing: Listing,
-    allListings: readonly Listing[],
+  listing: Listing,
+  allListings: readonly Listing[],
 ): MarketContext | null {
-    const pricePerSqFt =
-        getPricePerSqFt(listing)
+  if (
+    isKnownUnreliableListing(
+      listing.listing_id,
+    )
+  ) {
+    return null
+  }
+
+  const pricePerSqFt =
+    getPricePerSqFt(listing)
 
     if (
         pricePerSqFt === null ||

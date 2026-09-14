@@ -1,0 +1,22 @@
+/* Detail, status and pagination presentation only. */
+.detail-header{margin-bottom:28px;padding:26px 28px;border:1px solid rgba(25,76,61,.1);border-radius:22px;background:radial-gradient(circle at 95% 0%,rgba(205,178,113,.15),transparent 16rem),rgba(255,255,255,.84);box-shadow:var(--shadow-sm)}
+.detail-id{color:#8a9691;font-size:12px}
+.detail-grid{border-color:rgba(26,78,61,.095);border-radius:20px;background:rgba(26,78,61,.095);box-shadow:var(--shadow-sm)}
+.detail-field{padding:22px;background:rgba(255,255,255,.92)}
+.detail-field:hover{background:#fff}
+.detail-field dt{color:#85928d;font-size:10.5px;font-weight:750;letter-spacing:.045em;text-transform:uppercase}
+.detail-field dd{color:#27483d;font-size:15px}
+.listing-warning,.saved-warning,.metadata-warning{border-color:rgba(191,138,33,.2);border-radius:13px;background:linear-gradient(145deg,#fffaf0,#fff4db);color:#815817}
+.rental-description,.amenities-section,.confidence-item,.market-context-unavailable{border-color:rgba(25,75,60,.1);border-radius:18px;background:rgba(255,255,255,.88);box-shadow:var(--shadow-sm)}
+.amenity-chip{border:1px solid rgba(24,81,63,.08);background:linear-gradient(145deg,#f4f8f5,#eef4f0);color:#3e6256;font-weight:650}
+.state-card{padding:42px 32px;border-color:rgba(25,76,61,.1);border-radius:20px;background:rgba(255,255,255,.86);box-shadow:var(--shadow-sm)}
+.state-card p{color:#6c7b76}
+.state-card button,.pagination button,.saved-warning button{border:1px solid rgba(24,75,60,.13);border-radius:11px;background:rgba(255,255,255,.9);color:#315348;font-weight:700}
+.state-card button:hover:not(:disabled),.pagination button:hover:not(:disabled),.saved-warning button:hover:not(:disabled){border-color:rgba(24,75,60,.24);background:#fff;box-shadow:var(--shadow-sm);transform:translateY(-1px)}
+.error-state{border-color:rgba(177,65,50,.18);background:rgba(255,248,246,.9)}
+.pagination{gap:12px;margin-top:36px}
+.pagination button{min-width:108px;min-height:42px}
+.confidence-summary{border:1px solid rgba(24,75,60,.08)}
+.confidence-item{transition:transform var(--transition-base),box-shadow var(--transition-base),border-color var(--transition-base)}
+.confidence-item:hover{border-color:rgba(25,83,64,.17);box-shadow:var(--shadow-sm);transform:translateY(-2px)}
+@media (max-width:700px){.detail-header{padding:22px}.detail-field{padding:18px}.state-card{padding:34px 22px}}

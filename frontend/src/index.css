@@ -1469,6 +1469,12 @@ button:not(:disabled) {
   margin-top: 18px;
 }
 
+.market-context
+  > .detail-grid
+  > .detail-field:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
 .market-context-unavailable {
   margin: 18px 0 0;
   padding: 14px 16px;

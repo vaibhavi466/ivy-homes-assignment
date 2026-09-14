@@ -1,0 +1,58 @@
+/* Ivy Homes aesthetic theme — presentation only. */
+:root {
+  --color-bg:#f6f4ee;
+  --color-bg-subtle:#fbfaf6;
+  --color-surface:rgba(255,255,255,.9);
+  --color-surface-hover:#fff;
+  --color-text:#17342d;
+  --color-text-secondary:#60716b;
+  --color-text-muted:#87938f;
+  --color-brand:#165b49;
+  --color-brand-hover:#0f4638;
+  --color-brand-soft:#e8f3ee;
+  --color-brand-border:#c6ddd3;
+  --color-border:rgba(29,74,60,.12);
+  --color-border-strong:rgba(29,74,60,.22);
+  --radius-sm:10px;
+  --radius-md:14px;
+  --radius-lg:20px;
+  --radius-xl:28px;
+  --shadow-xs:0 1px 2px rgba(20,48,39,.04);
+  --shadow-sm:0 2px 8px rgba(20,48,39,.045),0 12px 28px rgba(20,48,39,.045);
+  --shadow-md:0 4px 12px rgba(20,48,39,.05),0 20px 48px rgba(20,48,39,.08);
+  --shadow-lg:0 12px 30px rgba(20,48,39,.08),0 32px 80px rgba(20,48,39,.12);
+}
+html{scroll-behavior:smooth}
+body{position:relative;isolation:isolate;background:radial-gradient(circle at 7% 8%,rgba(188,214,200,.34),transparent 30rem),radial-gradient(circle at 92% 16%,rgba(224,203,157,.26),transparent 28rem),linear-gradient(180deg,#faf9f5 0%,#f4f2eb 58%,#f8f7f3 100%);background-attachment:fixed}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.3;background-image:linear-gradient(rgba(24,80,63,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(24,80,63,.035) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.7),transparent 78%)}
+::selection{background:#cfe6da;color:#0f4638}
+h1{font-size:clamp(2.15rem,4.6vw,3.25rem);font-weight:780;line-height:1.01;letter-spacing:-.045em}
+h2{letter-spacing:-.03em}
+.app-header{border-bottom:1px solid rgba(26,78,61,.09);background:rgba(250,249,245,.78);box-shadow:0 8px 32px rgba(31,69,57,.045);backdrop-filter:blur(24px) saturate(145%);-webkit-backdrop-filter:blur(24px) saturate(145%)}
+.app-header-inner{min-height:82px;padding-inline:32px}
+.app-brand{gap:12px}
+.app-brand-mark{position:relative;width:42px;height:42px;overflow:hidden;border:1px solid rgba(255,255,255,.65);border-radius:14px;background:radial-gradient(circle at 72% 22%,rgba(255,255,255,.28),transparent 28%),linear-gradient(145deg,#1c705a 0%,#114b3c 72%,#0c3c31 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 8px 20px rgba(20,84,65,.22)}
+.app-brand-mark::after{content:"";position:absolute;width:18px;height:18px;right:-7px;bottom:-6px;border-radius:50%;background:rgba(218,190,121,.6)}
+.app-brand-copy strong{font-size:16px;font-weight:780;letter-spacing:-.025em}
+.app-brand-copy>span{color:#71827b;font-size:9px;letter-spacing:.11em}
+.app-nav{gap:6px}
+.app-nav a{min-height:42px;padding-inline:15px;border:1px solid transparent;color:#66766f;font-size:12.5px;font-weight:680}
+.app-nav a:hover{border-color:rgba(24,86,68,.1);background:rgba(255,255,255,.72);color:#1d4b3e;box-shadow:var(--shadow-xs);transform:translateY(-1px)}
+.app-nav a.active{border-color:rgba(23,91,72,.11);background:linear-gradient(135deg,rgba(229,243,236,.98),rgba(244,239,220,.72));color:#145642;box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+.nav-count{background:linear-gradient(135deg,#1a6a54,#114b3c);box-shadow:0 3px 8px rgba(22,91,73,.22)}
+.account-avatar{border-color:rgba(22,91,73,.14);background:linear-gradient(145deg,#f2f8f5,#e0eee7);box-shadow:inset 0 1px 0 #fff}
+.logout-button{border-color:rgba(25,75,60,.12);border-radius:11px;background:rgba(255,255,255,.75);box-shadow:var(--shadow-xs)}
+.logout-button:hover{border-color:rgba(25,75,60,.22);background:#fff;color:#174c3c;box-shadow:var(--shadow-sm);transform:translateY(-1px)}
+.listings-page,.insights-page,.detail-page{position:relative;padding-top:46px;padding-bottom:72px}
+.listings-page,.insights-page{width:min(1420px,100%)}
+.detail-page{width:min(1080px,100%)}
+.page-heading{position:relative;align-items:center;margin-bottom:30px;padding:28px 30px;overflow:hidden;border:1px solid rgba(25,76,61,.1);border-radius:24px;background:radial-gradient(circle at 92% 0%,rgba(213,190,132,.22),transparent 18rem),linear-gradient(135deg,rgba(255,255,255,.88),rgba(243,248,245,.8));box-shadow:var(--shadow-sm)}
+.page-heading::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(to bottom,#1b6a55,#d0ae61)}
+.page-heading> *{position:relative;z-index:1}
+.page-heading h1{margin-bottom:10px}
+.page-eyebrow,.login-eyebrow{color:#9a7835;font-size:11px;font-weight:800;letter-spacing:.14em}
+.page-description{max-width:720px;color:#63736d;font-size:14.5px;line-height:1.65}
+.page-status{min-width:150px;padding:12px 14px;border:1px solid rgba(24,81,63,.09);border-radius:14px;background:rgba(255,255,255,.72)}
+.page-status strong{color:#194f3f;font-size:15px}
+:focus-visible{outline:3px solid rgba(24,104,80,.28);outline-offset:3px}
+.skip-link{border-radius:10px;background:#114a3b;box-shadow:var(--shadow-md)}
